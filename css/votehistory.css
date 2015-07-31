@@ -1,0 +1,43 @@
+body {
+    font-family: sans-serif;
+}
+
+h2 {
+    font-size: 120%;
+}
+
+footer {
+    font-size: smaller;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.discussion {
+    border: thin solid gray;
+    padding: 1em;
+    margin: 5px 0;
+}
+
+.discussion button {
+    float: right;
+}
+
+.discussion * {
+    display: block;
+}
+
+#analysis div {
+    border: thin solid blue;
+    padding: 1em;
+    display: block;
+}
+
+#form {
+    margin: 1em 0;
+}

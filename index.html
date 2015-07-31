@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Vote History</title>
+    <link href="css/mw.css" rel="stylesheet" />
+    <link href="css/votehistory.css" rel="stylesheet" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/locale/en-gb.js"></script>
+    <script src="js/votehistory.js"></script>
+  </head>
+  <body>
+    <h1>Vote History<sup><small><span style="color: gray"> <abbr title="i.e. barely unfunctional!">Beta!</abbr></span></small></sup></h1>
+    <div id="form">
+      <label for="page">Page:</label>
+      <input type="text" id="page" class="mw-ui-input mw-ui-input-inline"/>
+      <button id="submit" class="mw-ui-button mw-ui-progressive">
+        Search for discussions
+      </button>
+    </div>
+    <output id="error" style="display: none;"></output>
+    <output id="discussions" style="display: none;"></output>
+    <output id="analysis" style="display: none;"></output>
+    <br />
+    <footer>
+      <a href="https://en.wikipedia.org/wiki/User:APerson" title="APerson's user page on the English Wikipedia">APerson</a> (<a href="https://en.wikipedia.org/wiki/User_talk:APerson" title="APerson's talk page on the English Wikipedia">talk!</a>) • <a href="https://github.com/APerson241/vote-history" title="Source code on GitHub">Source code</a> • <a href="https://github.com/APerson241/vote-history/issues" title="Issues on GitHub">Issues</a>
+    </footer>
+  </body>
+</html>
