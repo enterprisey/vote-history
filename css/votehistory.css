@@ -41,3 +41,27 @@ a:hover {
 #form {
     margin: 1em 0;
 }
+
+.line {
+    fill: none;
+    stroke: gray;
+    stroke-width: 1.5px;
+}
+
+.line.keep, .line.support {
+    stroke: green;
+}
+
+.line.delete, .line.support {
+    stroke: red;
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.x.axis path {
+    display: none;
+}
