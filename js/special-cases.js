@@ -11,7 +11,21 @@ var VoteHistorySpecialCases = {
         "Wikipedia:Categories for discussion/Log/": this.cfd,
         "Wikipeda:Redirects for discussion/Log/": this.rfd,
         "Wikipedia:Miscellany for deletion": this.mfd,
-        "Wikipedia:Requests for adminship/": this.rfa,
+        "Wikipedia:Requests for adminship/": function ( pageText ) {
+            if ( pageText.match( /=====Support=====/ ) ) {
+                var result = pageText
+                    .match( /=====Support=====[\S\s]+/ )[0]
+                    .replace( /=====Support=====/, "" )
+                    .replace( /=====Oppose=====/, "" )
+                    .replace( /=====Neutral=====/, "" );
+                return result;
+            } else {
+                var result = pageText
+                    .match( /====Discussion====[\S\s]+/ )[ 0 ]
+                    .replace( /====Discussion====/, "" );
+                return result;
+            }
+        },
         "Wikipedia:Requests for bureaucratship/": this.rfb
     },
     getFunction: function ( title ) {

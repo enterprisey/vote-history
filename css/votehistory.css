@@ -52,8 +52,16 @@ a:hover {
     stroke: green;
 }
 
-.line.delete, .line.support {
+.line.delete, .line.oppose {
     stroke: red;
+}
+
+text.keep, text.support {
+    fill: green;
+}
+
+text.delete, text.oppose {
+    fill: red;
 }
 
 .axis path, .axis line {

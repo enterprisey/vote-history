@@ -50,14 +50,23 @@ $( document ).ready( function () {
                                                     .append( $( "<a> " )
                                                              .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                              .text( pageTitle ) ) );
-                analyzeDiscussion( pageText );
-            } else if(!sectionHeaders ) {
-                $( "#discussions" ).hide();
-                $( "#error" ).empty().show();
-                $( "#error" ).append( $( "<div>" )
-                                      .addClass( "errorbox" )
-                                      .text( "I couldn't find any discussion headers on the page." ) );
-                return;
+                analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ) );
+            } else if ( !sectionHeaders ) {
+                if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
+                    $( "#discussions" ).empty().append( $( "<div>" )
+                                                        .addClass( "successbox" )
+                                                        .text( "Single-discussion page detected at " )
+                                                        .append( $( "<a> " )
+                                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
+                                                                 .text( pageTitle ) ) );
+                    analyzeDiscussion( pageText );
+                } else {
+                    $( "#discussions" ).hide();
+                    $( "#error" ).empty().show();
+                    $( "#error" ).append( $( "<div>" )
+                                          .addClass( "errorbox" )
+                                          .text( "I couldn't find any discussion headers on the page." ) );
+                }
             } else {
                 $( "#discussions" ).append( $( "<h2>" ).text( "Discussions on " )
                                             .append( $( "<a> " )
@@ -83,14 +92,15 @@ $( document ).ready( function () {
                                                 .append( $( "<b>" ).text( item.replace( /=/g, "" ) ) )
                                                 .append( $( "<i>" ).text( ( !votes ? "No votes" : ( votes.length + " votes" ) ) +
                                                                           "; " + section.length + " bytes" ) ) );
-                } );
-            }
-        } );
+                } ); // end forEach on sectionHeaders
+            } // end else block
+        } ); // end JSON query handler
     }; // end listDiscussions()
 
     var getVotes = function ( voteText ) {
-        voteText = voteText.replace( /=.+?=/, "" ).replace( /#/, "*" );
-        return voteText.match( /\*\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d\d\s\w+?\s\d\d\d\d\s\(UTC\)/g );
+        voteText = voteText.replace( /=.+?=/, "" ).replace( /#/g, "*" );
+        var matches = voteText.match( /\*\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)/g );
+        return matches;
     }
 
     var analyzeDiscussion = function ( discussionText ) {
@@ -107,31 +117,35 @@ $( document ).ready( function () {
             return;
         }
 
-        $( "#analysis" ).append( $( "<ul>" ) );
         var voteObjects = [];
         votes.forEach( function ( voteText ) {
             var vote = voteText.match( /'''.+?'''/ )[0].replace( /'''/g, "" ),
-                timestamp = voteText.match( /\d\d:\d\d,\s\d\d\s\w+\s\d\d\d\d\s\(UTC\)/ )[0];
+                timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d\s\(UTC\)/ )[0];
             vote = vote.replace( /Obvious/, "" ).replace( /Speedy/, "" ).trim();
+            [ "support", "oppose", "neutral" ].forEach( function ( voteType ) {
+                if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
+                    vote = voteType.charAt( 0 ).toUpperCase() + voteType.substring( 1 );
+                }
+            } );
             vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
-            console.log(vote);
             var voteObject = { "vote": vote, "time": Date.parse( timestamp ) };
             voteObjects.push( voteObject );
         } );
         voteObjects.sort( function ( a, b ) { return a.time - b.time; } );
         appendVoteGraphTo( "#analysis", voteObjects );
+        $( "#analysis" ).append( $( "<ul>" ) );
         voteObjects.forEach( function ( voteObject ) {
             $( "#analysis ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
                                                           moment( voteObject.time ).format( "D MMMM YYYY" ) ) );
         } );
 
-        if( $( "#analysis" ).offset().top > $( window ).scrollTop + $( window ).height ) {
+        if( $( "#analysis" ).offset().top > ( $( window ).scrollTop() + $( window ).height() ) ) {
             window.scrollTo( 0, $( "#analysis" ).offset().top );
         }
     }
 
     var appendVoteGraphTo = function ( location, voteObjects ) {
-        const WIDTH = 900, HEIGHT = 250, MARGIN = { top: 25, bottom: 25, left: 50, right: 25 };
+        const WIDTH = 700, HEIGHT = 250, MARGIN = { top: 25, bottom: 25, left: 50, right: 100 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
@@ -181,6 +195,11 @@ $( document ).ready( function () {
                 .attr( "d", line )
                 .attr( "class", "line " + voteType.toLowerCase() )
                 .attr( "vote-type", voteType );
+            svg.append( "text" )
+                .attr( "x", xScale( specificVotes.slice( -1 )[0].time ) )
+                .attr( "y", yScale( voteTotals[ voteType ] ) )
+                .text( voteType )
+                .attr( "class", voteType.toLowerCase().substr( 0, 10 ) );
         }
     }
 
