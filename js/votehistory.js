@@ -107,7 +107,7 @@ $( document ).ready( function () {
         $( "#analysis" )
             .show()
             .empty()
-            .append( $( "<h2>" ).text( "Analysis of discussion" ) );
+            .append( $( "<h2>" ).text( "Graph of votes over time" ) );
 
         var votes = getVotes( discussionText );
         if ( !votes ) {
