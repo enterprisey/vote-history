@@ -65,7 +65,11 @@ $( document ).ready( function () {
                     $( "#error" ).empty().show();
                     $( "#error" ).append( $( "<div>" )
                                           .addClass( "errorbox" )
-                                          .text( "I couldn't find any discussion headers on the page." ) );
+                                          .append( "I couldn't find any discussion headers on " )
+                                          .append( $( "<a> " )
+                                                     .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
+                                                     .text( "the page" ) )
+                                          .append( "." ) );
                 }
             } else {
                 $( "#discussions" ).append( $( "<h2>" ).text( "Discussions on " )
@@ -133,6 +137,23 @@ $( document ).ready( function () {
         } );
         voteObjects.sort( function ( a, b ) { return a.time - b.time; } );
         appendVoteGraphTo( "#analysis", voteObjects );
+		var voteTallies = {};
+		voteObjects.forEach( function ( voteObject ) {
+            if( voteTallies.hasOwnProperty( voteObject.vote ) ) {
+                voteTallies[ voteObject.vote ]++;
+            } else {
+                voteTallies[ voteObject.vote ] = 1;
+            }
+        } );
+        $( "#analysis" ).append( "<table><caption>Vote tally</caption><tr></tr></table>" );
+        for( var voteType in voteTallies ) {
+            $( "#analysis table tr" ).append( $( "<th>" ).text( voteType ) );
+        }
+        $( "#analysis table" ).append( "<tr></tr>" );
+        for( var voteType in voteTallies ) {
+            $( "#analysis table tr" ).last().append( $( "<td>" ).text( voteTallies[ voteType ] ) );
+        }
+            
         $( "#analysis" ).append( $( "<ul>" ) );
         voteObjects.forEach( function ( voteObject ) {
             $( "#analysis ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
