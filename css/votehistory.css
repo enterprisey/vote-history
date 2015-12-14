@@ -73,3 +73,19 @@ text.delete, text.oppose {
 .x.axis path {
     display: none;
 }
+
+#analysis table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 20px;
+}
+
+#analysis table caption {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+#analysis table th, #analysis table td {
+    border: thin solid gray;
+    padding: 5px;
+}
