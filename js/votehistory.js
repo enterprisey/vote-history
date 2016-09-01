@@ -124,7 +124,7 @@ $( document ).ready( function () {
         var voteObjects = [];
         votes.forEach( function ( voteText ) {
             var vote = voteText.match( /'''.+?'''/ )[0].replace( /'''/g, "" ),
-                timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d\s\(UTC\)/ )[0];
+                timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d/ )[0];
             vote = vote.replace( /Obvious/, "" ).replace( /Speedy/, "" ).trim();
             [ "support", "oppose", "neutral" ].forEach( function ( voteType ) {
                 if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
@@ -132,7 +132,8 @@ $( document ).ready( function () {
                 }
             } );
             vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
-            var voteObject = { "vote": vote, "time": Date.parse( timestamp ) };
+            console.log(timestamp);
+            var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
             voteObjects.push( voteObject );
         } );
         voteObjects.sort( function ( a, b ) { return a.time - b.time; } );
@@ -157,7 +158,7 @@ $( document ).ready( function () {
         $( "#analysis" ).append( $( "<ul>" ) );
         voteObjects.forEach( function ( voteObject ) {
             $( "#analysis ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
-                                                          moment( voteObject.time ).format( "D MMMM YYYY" ) ) );
+                                                          voteObject.time.format( "HH:mm, D MMMM YYYY" ) ) );
         } );
 
         if( $( "#analysis" ).offset().top > ( $( window ).scrollTop() + $( window ).height() ) ) {
