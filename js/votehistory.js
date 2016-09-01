@@ -132,7 +132,6 @@ $( document ).ready( function () {
                 }
             } );
             vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
-            console.log(timestamp);
             var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
             voteObjects.push( voteObject );
         } );
