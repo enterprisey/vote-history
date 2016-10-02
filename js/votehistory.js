@@ -4,7 +4,7 @@ $( document ).ready( function () {
           API_SUFFIX = "&format=json&callback=?&continue=";
 
     var listDiscussions = function () {
-        var pageTitle = $( "#page" ).val();
+        var pageTitle = $( "#page" ).val().trim();
         $( "#error" ).hide();
         $( "#discussions" ).hide();
         $( "#analysis" ).hide();
@@ -136,24 +136,55 @@ $( document ).ready( function () {
             voteObjects.push( voteObject );
         } );
         voteObjects.sort( function ( a, b ) { return a.time - b.time; } );
-        appendVoteGraphTo( "#analysis", voteObjects );
-		var voteTallies = {};
-		voteObjects.forEach( function ( voteObject ) {
+
+        // {"Support": 12, "Oppose": 6, ...}
+        var voteTallies = {};
+        voteObjects.forEach( function ( voteObject ) {
             if( voteTallies.hasOwnProperty( voteObject.vote ) ) {
                 voteTallies[ voteObject.vote ]++;
             } else {
                 voteTallies[ voteObject.vote ] = 1;
             }
         } );
-        $( "#analysis" ).append( "<table><caption>Vote tally</caption><tr></tr></table>" );
-        for( var voteType in voteTallies ) {
+
+        // We don't want options with only one vote to show up in the table
+        var allowedVotes = Object.keys( voteTallies ).filter( function ( vote ) {
+            return voteTallies[ vote ] > 1;
+        } );
+
+        // We always want to show some votes
+        ["Support", "Oppose"].forEach( function ( v ) {
+            if( allowedVotes.indexOf( v ) === -1 ) {
+                allowedVotes.push( v );
+            }
+        } );
+        var filteredVoteObjects = voteObjects.filter( function ( voteObject ) {
+            return allowedVotes.indexOf( voteObject.vote ) > -1;
+        } );
+
+        appendVoteGraphTo( "#analysis", filteredVoteObjects );
+
+        $( "#analysis" ).append( "<h2>Vote tally</h2>" );
+        $( "#analysis" ).append( "<table><tr></tr></table>" );
+
+        // allowedVotes already contains non-singleton vote types
+        allowedVotes.forEach( function ( voteType ) {
             $( "#analysis table tr" ).append( $( "<th>" ).text( voteType ) );
-        }
+        } );
         $( "#analysis table" ).append( "<tr></tr>" );
-        for( var voteType in voteTallies ) {
+        allowedVotes.forEach( function ( voteType ) {
             $( "#analysis table tr" ).last().append( $( "<td>" ).text( voteTallies[ voteType ] ) );
+        } );
+
+        $( "#analysis" ).append( "<h2>Vote list</h2>" );
+
+        // Show a note if we filtered any votes
+        var numVotesFiltered = voteObjects.length - filteredVoteObjects.length;
+        if( numVotesFiltered > 0 ) {
+            $( "#analysis" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
+                                    ( numVotesFiltered === 1 ? "" : "s" ) + " that " + ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
         }
-            
+
         $( "#analysis" ).append( $( "<ul>" ) );
         voteObjects.forEach( function ( voteObject ) {
             $( "#analysis ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
@@ -166,7 +197,7 @@ $( document ).ready( function () {
     }
 
     var appendVoteGraphTo = function ( location, voteObjects ) {
-        const WIDTH = 700, HEIGHT = 250, MARGIN = { top: 25, bottom: 25, left: 50, right: 100 };
+        const WIDTH = 700, HEIGHT = 250, MARGIN = { top: 15, bottom: 25, left: 50, right: 100 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );

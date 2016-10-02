@@ -1,5 +1,8 @@
 body {
     font-family: sans-serif;
+    color: #333;
+    margin: 40px auto;
+    max-width: 800px;
 }
 
 h2 {
