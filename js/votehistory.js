@@ -126,11 +126,16 @@ $( document ).ready( function () {
             var vote = voteText.match( /'''.+?'''/ )[0].replace( /'''/g, "" ),
                 timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d/ )[0];
             vote = vote.replace( /Obvious/, "" ).replace( /Speedy/, "" ).trim();
+
+	    // Votes that contain the string "support" (or "oppose", etc)
+	    // are treated as if they consisted entirely of "support" (etc)
             [ "support", "oppose", "neutral" ].forEach( function ( voteType ) {
                 if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
                     vote = voteType.charAt( 0 ).toUpperCase() + voteType.substring( 1 );
                 }
             } );
+
+	    // All other votes are transformed from xXxXx (or whatever) to Xxxxx
             vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
             var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
             voteObjects.push( voteObject );
@@ -152,27 +157,42 @@ $( document ).ready( function () {
             return voteTallies[ vote ] > 1;
         } );
 
-        // We always want to show some votes
-        ["Support", "Oppose"].forEach( function ( v ) {
-            if( allowedVotes.indexOf( v ) === -1 ) {
-                allowedVotes.push( v );
-            }
-        } );
+        // One of "Support" or "Oppose" present -> the other should also be shown
+	if( allowedVotes.indexOf( "Support" ) > -1 && allowedVotes.indexOf( "Oppose" ) === -1 ) {
+	    allowedVotes.push( "Oppose" );
+	}
+	if( allowedVotes.indexOf( "Oppose" ) > -1 && allowedVotes.indexOf( "Support" ) === -1 ) {
+	    allowedVotes.push( "Support" );
+	}
+
+	// Actually filter the vote objects
         var filteredVoteObjects = voteObjects.filter( function ( voteObject ) {
             return allowedVotes.indexOf( voteObject.vote ) > -1;
         } );
 
+	// Show the vote graph
         appendVoteGraphTo( "#analysis", filteredVoteObjects );
 
+	var voteTypes = allowedVotes;
+
+	// Bring "Support"/"Oppose"/"Neutral" to the front in that order
+	var fixedVoteTypes = [ "Support", "Oppose", "Neutral" ];
+	for( var i = 0; i < fixedVoteTypes.length; i++ ) {
+	    var currentIndex = voteTypes.indexOf( fixedVoteTypes[ i ] );
+	    if( currentIndex > 0 ) {
+		voteTypes[ currentIndex ] = voteTypes[ i ];
+		voteTypes[ i ] = fixedVoteTypes[ i ];
+	    }
+	}
+
+	// Show the vote tally table
         $( "#analysis" ).append( "<h2>Vote tally</h2>" );
         $( "#analysis" ).append( "<table><tr></tr></table>" );
-
-        // allowedVotes already contains non-singleton vote types
-        allowedVotes.forEach( function ( voteType ) {
+        voteTypes.forEach( function ( voteType ) {
             $( "#analysis table tr" ).append( $( "<th>" ).text( voteType ) );
         } );
         $( "#analysis table" ).append( "<tr></tr>" );
-        allowedVotes.forEach( function ( voteType ) {
+        voteTypes.forEach( function ( voteType ) {
             $( "#analysis table tr" ).last().append( $( "<td>" ).text( voteTallies[ voteType ] ) );
         } );
 
@@ -182,7 +202,8 @@ $( document ).ready( function () {
         var numVotesFiltered = voteObjects.length - filteredVoteObjects.length;
         if( numVotesFiltered > 0 ) {
             $( "#analysis" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
-                                    ( numVotesFiltered === 1 ? "" : "s" ) + " that " + ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
+                                    ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
+				    ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
         }
 
         $( "#analysis" ).append( $( "<ul>" ) );
