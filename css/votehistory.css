@@ -80,6 +80,15 @@ text.delete, text.oppose {
     fill: red;
 }
 
+.line.percentage {
+    fill: none;
+    stroke: black;
+}
+
+rect.background {
+    shape-rendering: crispEdges;
+}
+
 .axis path, .axis line {
     fill: none;
     stroke: black;

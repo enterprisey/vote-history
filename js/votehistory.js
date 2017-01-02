@@ -65,7 +65,9 @@ $( document ).ready( function () {
                                                      .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                      .text( pageTitle ) )
                                             .append( "." ) );
-                analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ) );
+                var showSupportPercentageGraph = pageTitle.startsWith( "Wikipedia:Requests for adminship/" );
+                analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
+                                   showSupportPercentageGraph );
             } else if ( !sectionHeaders ) {
                 if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
                     $( "#discussions" ).append( $( "<div>" )
@@ -101,6 +103,7 @@ $( document ).ready( function () {
 
                     var votes = getVotes( section );
                     var disabledAttr = votes ? {} : { "disabled": "disabled" };
+                    var analyzeHandler = function ( e ) { analyzeDiscussion( section ); };
                     $( "#discussions" ).append( $( "<div>" )
                                                 .addClass( "discussion" )
                                                 .append( $( "<button>" )
@@ -108,7 +111,7 @@ $( document ).ready( function () {
                                                          .addClass( "vote-history-analyze-button" )
                                                          .text( "Analyze >>" )
                                                          .attr( disabledAttr )
-                                                         .click( function ( e ) { analyzeDiscussion( section ); } ) )
+                                                         .click( analyzeHandler ) )
                                                 .append( $( "<b>" ).text( item.replace( /=/g, "" ) ) )
                                                 .append( $( "<i>" ).text( ( !votes ? "No votes" : ( votes.length + " votes" ) ) +
                                                                           "; " + section.length + " bytes" ) ) );
@@ -123,11 +126,11 @@ $( document ).ready( function () {
         return matches;
     }
 
-    var analyzeDiscussion = function ( discussionText ) {
+    var analyzeDiscussion = function ( discussionText, showSupportPercentageTable ) {
         $( "#analysis" )
             .show()
             .empty()
-            .append( $( "<h2>" ).text( "Graph of votes over time" ) );
+            .append( $( "<h2>" ).text( "Graph of vote totals over time" ) );
 
         var votes = getVotes( discussionText );
         if ( !votes ) {
@@ -188,6 +191,12 @@ $( document ).ready( function () {
 
 	// Show the vote graph
         appendVoteGraphTo( "#analysis", filteredVoteObjects );
+
+        // Show support percentage table
+        if( showSupportPercentageTable ) {
+            $( "#analysis" ).append( "<h2>Support percentage graph</h2>" );
+            appendSupportPercentageGraphTo( "#analysis", filteredVoteObjects );
+        }
 
 	var voteTypes = allowedVotes;
 
@@ -292,6 +301,161 @@ $( document ).ready( function () {
         }
     }
 
+    // This version uses background colors
+    function appendSupportPercentageGraphTo ( location, voteObjects ) {
+        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
+        var xScale = d3.time.scale()
+            .range( [ 0, WIDTH ] )
+            .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
+        var earliestVoteTime = xScale.domain()[ 0 ];
+
+        // Calculate the highest and lowest percentages reached, for the y-scale
+        var runningSupports = 0,
+            runningOpposes = 0;
+        var percentages = [];
+        for(var i = 0; i < voteObjects.length; i++) {
+            if( voteObjects[i].vote === "Support" ) runningSupports++;
+            if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
+            percentages.push( {
+                "time": voteObjects[i].time,
+                "percentage": runningSupports / ( runningSupports + runningOpposes )
+            } );
+        }
+        var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } )
+        var yScale = d3.scale.linear()
+            .range( [ HEIGHT, 0 ] )
+            .domain( yExtent );
+
+        var xAxis = d3.svg.axis()
+            .scale( xScale )
+            .orient( "bottom" );
+        var yAxis = d3.svg.axis()
+            .tickFormat( function ( tickData ) { return Math.floor(tickData * 100) + "%"; } )
+            .scale( yScale )
+            .orient( "left" );
+        var voteRunningTotals = {};
+        var line = d3.svg.line()
+            .x( function ( d ) { return xScale( d.time ); } )
+            .y( function ( d ) { return yScale( d.percentage ); } );
+        var svg = d3.select( location ).append( "svg" )
+            .attr( "class", "support" )
+            .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
+            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom)
+            .attr( "transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")" );
+
+        // Background color
+        var backgroundRectHeight = HEIGHT/((yExtent[1] - yExtent[0])*100);
+        for( var i = Math.floor(yExtent[0]*100)+1; i <= Math.floor(yExtent[1]*100); i++ ) {
+            svg.append( "rect" )
+                .attr( "class", "background" )
+                .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[i] )
+                .attr( "x", 0 )
+                .attr( "y", yScale( i/100 ) )
+                .attr( "width", WIDTH )
+                .attr( "height", backgroundRectHeight );
+        }
+
+        // Clip out the background color for the x-axis
+        svg.append( "rect" )
+            .style( "fill", "white" )
+            .attr( "x", 0 )
+            .attr( "y", HEIGHT )
+            .attr( "width", WIDTH )
+            .attr( "height", MARGIN.bottom );
+
+        // Axes
+        svg.append( "g" ).call( xAxis )
+            .attr( "class", "x axis" )
+            .attr( "transform", "translate(0," + (HEIGHT) + ")" );
+        svg.append( "g" ).call( yAxis )
+            .attr( "class", "y axis" )
+            .attr( "transform", "translate(0,0)" );
+
+        // The data line
+        svg.append( "path" )
+            .datum( percentages )
+            .attr( "d", line )
+            .attr( "class", "line percentage" );
+    }
+
+    // This version colors the line in the line graph
+    function appendSupportPercentageGraphToOld ( location, voteObjects ) {
+        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
+        var xScale = d3.time.scale()
+            .range( [ 0, WIDTH ] )
+            .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
+        var earliestVoteTime = xScale.domain()[ 0 ];
+
+        // Calculate the highest and lowest percentages reached, for the y-scale
+        var runningSupports = 0,
+            runningOpposes = 0;
+        var percentages = [];
+        for( var i = 0; i < voteObjects.length; i++) {
+            if( voteObjects[i].vote === "Support" ) runningSupports++;
+            if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
+            percentages.push( {
+                "time": voteObjects[i].time,
+                "percentage": runningSupports / ( runningSupports + runningOpposes )
+            } );
+        }
+        var yScale = d3.scale.linear()
+            .range( [ HEIGHT, 0 ] )
+            .domain( d3.extent( percentages, function ( d ) { return d.percentage; } ) );
+
+        // We do some d3 magic to get the color-coding, so we need each data point with
+        // x, y, x1, y1, x2, and y2 attributes instead of percentage and vote ones
+        // Source: http://stackoverflow.com/a/27027550/1757964
+        var svgPoints = percentages.map( function ( dataPoint, index ) {
+            var nextPoint = percentages[index + 1],
+                previousPoint = percentages[index - 1],
+                thisX = xScale( dataPoint.time ),
+                thisY = yScale( dataPoint.percentage );
+            return {
+                x: thisX,
+                y: thisY,
+                x1: thisX,
+                y1: thisY,
+                x2: xScale( nextPoint ? nextPoint.time : previousPoint.time ),
+                y2: yScale( nextPoint ? nextPoint.percentage : previousPoint.percentage ),
+                stroke: "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[ Math.round( dataPoint.percentage * 100 ) ]
+            };
+        } );
+
+        var xAxis = d3.svg.axis()
+            .scale( xScale )
+            .orient( "bottom" );
+        var yAxis = d3.svg.axis()
+            .tickFormat( function ( tickData ) { return tickData * 100 + "%"; } )
+            .scale( yScale )
+            .orient( "left" );
+        var voteRunningTotals = {};
+        var line = d3.svg.line()
+            .x( function ( d ) { return xScale( d.time ); } )
+            .y( function ( d ) { return yScale( d.percentage ); } );
+        var svg = d3.select( location ).append( "svg" )
+            .attr( "class", "support" )
+            .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
+            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom)
+            .attr( "transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")" );
+        svg.append( "g" ).call( xAxis )
+            .attr( "class", "x axis" )
+            .attr( "transform", "translate(0," + HEIGHT + ")" );
+        svg.append( "g" ).call( yAxis )
+            .attr( "class", "y axis" )
+            .attr( "transform", "translate(0,0)" );
+        svg.selectAll( "line" )
+            .data( svgPoints )
+            .enter()
+            .append( "line" )
+            .attr( 'x1', function( d ) { return d.x1; } )
+            .attr( 'y1', function( d ) { return d.y1; } )
+            .attr( 'x2', function( d ) { return d.x2; } )
+            .attr( 'y2', function( d ) { return d.y2; } )
+            .attr( 'stroke', function ( d ) { return d.stroke; } )
+            .attr( "fill", "none" )
+            .attr( "stroke-width", 2 );
+    }
+
     // Bind form submission handler to submission button & page field
     $( "#submit" ).click( function () {
         listDiscussions();
@@ -311,3 +475,4 @@ $( document ).ready( function () {
       $( "#submit" ).trigger( "click" );
     }
 } );
+
