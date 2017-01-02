@@ -330,7 +330,7 @@ $( document ).ready( function () {
             .scale( xScale )
             .orient( "bottom" );
         var yAxis = d3.svg.axis()
-            .tickFormat( function ( tickData ) { return Math.floor(tickData * 100) + "%"; } )
+            .tickFormat( function ( tickData ) { return d3.format(".0%")(tickData); } )
             .scale( yScale )
             .orient( "left" );
         var voteRunningTotals = {};
@@ -376,84 +376,6 @@ $( document ).ready( function () {
             .datum( percentages )
             .attr( "d", line )
             .attr( "class", "line percentage" );
-    }
-
-    // This version colors the line in the line graph
-    function appendSupportPercentageGraphToOld ( location, voteObjects ) {
-        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
-        var xScale = d3.time.scale()
-            .range( [ 0, WIDTH ] )
-            .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
-        var earliestVoteTime = xScale.domain()[ 0 ];
-
-        // Calculate the highest and lowest percentages reached, for the y-scale
-        var runningSupports = 0,
-            runningOpposes = 0;
-        var percentages = [];
-        for( var i = 0; i < voteObjects.length; i++) {
-            if( voteObjects[i].vote === "Support" ) runningSupports++;
-            if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
-            percentages.push( {
-                "time": voteObjects[i].time,
-                "percentage": runningSupports / ( runningSupports + runningOpposes )
-            } );
-        }
-        var yScale = d3.scale.linear()
-            .range( [ HEIGHT, 0 ] )
-            .domain( d3.extent( percentages, function ( d ) { return d.percentage; } ) );
-
-        // We do some d3 magic to get the color-coding, so we need each data point with
-        // x, y, x1, y1, x2, and y2 attributes instead of percentage and vote ones
-        // Source: http://stackoverflow.com/a/27027550/1757964
-        var svgPoints = percentages.map( function ( dataPoint, index ) {
-            var nextPoint = percentages[index + 1],
-                previousPoint = percentages[index - 1],
-                thisX = xScale( dataPoint.time ),
-                thisY = yScale( dataPoint.percentage );
-            return {
-                x: thisX,
-                y: thisY,
-                x1: thisX,
-                y1: thisY,
-                x2: xScale( nextPoint ? nextPoint.time : previousPoint.time ),
-                y2: yScale( nextPoint ? nextPoint.percentage : previousPoint.percentage ),
-                stroke: "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[ Math.round( dataPoint.percentage * 100 ) ]
-            };
-        } );
-
-        var xAxis = d3.svg.axis()
-            .scale( xScale )
-            .orient( "bottom" );
-        var yAxis = d3.svg.axis()
-            .tickFormat( function ( tickData ) { return tickData * 100 + "%"; } )
-            .scale( yScale )
-            .orient( "left" );
-        var voteRunningTotals = {};
-        var line = d3.svg.line()
-            .x( function ( d ) { return xScale( d.time ); } )
-            .y( function ( d ) { return yScale( d.percentage ); } );
-        var svg = d3.select( location ).append( "svg" )
-            .attr( "class", "support" )
-            .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
-            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom)
-            .attr( "transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")" );
-        svg.append( "g" ).call( xAxis )
-            .attr( "class", "x axis" )
-            .attr( "transform", "translate(0," + HEIGHT + ")" );
-        svg.append( "g" ).call( yAxis )
-            .attr( "class", "y axis" )
-            .attr( "transform", "translate(0,0)" );
-        svg.selectAll( "line" )
-            .data( svgPoints )
-            .enter()
-            .append( "line" )
-            .attr( 'x1', function( d ) { return d.x1; } )
-            .attr( 'y1', function( d ) { return d.y1; } )
-            .attr( 'x2', function( d ) { return d.x2; } )
-            .attr( 'y2', function( d ) { return d.y2; } )
-            .attr( 'stroke', function ( d ) { return d.stroke; } )
-            .attr( "fill", "none" )
-            .attr( "stroke-width", 2 );
     }
 
     // Bind form submission handler to submission button & page field
