@@ -59,11 +59,12 @@ $( document ).ready( function () {
             var sectionHeaders = pageText.match( /==+.+?==+/g );
             if ( VoteHistorySpecialCases.check( pageTitle ) ) {
                 $( "#discussions" ).append( $( "<div>" )
-                                                    .addClass( "successbox" )
-                                                    .text( "Special discussion page detected at " )
-                                                    .append( $( "<a> " )
-                                                             .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                             .text( pageTitle ) ) );
+                                            .addClass( "successbox" )
+                                            .text( "Special discussion page detected at " )
+                                            .append( $( "<a> " )
+                                                     .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
+                                                     .text( pageTitle ) )
+                                            .append( "." ) ));
                 analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ) );
             } else if ( !sectionHeaders ) {
                 if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
