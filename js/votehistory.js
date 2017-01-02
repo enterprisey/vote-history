@@ -64,7 +64,7 @@ $( document ).ready( function () {
                                             .append( $( "<a> " )
                                                      .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                      .text( pageTitle ) )
-                                            .append( "." ) ));
+                                            .append( "." ) );
                 analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ) );
             } else if ( !sectionHeaders ) {
                 if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
