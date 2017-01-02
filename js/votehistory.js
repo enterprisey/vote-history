@@ -1,6 +1,7 @@
 /* jshint moz: true */
 $( document ).ready( function () {
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
+          API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
           API_SUFFIX = "&format=json&callback=?&continue=";
 
     var listDiscussions = function () {
@@ -19,7 +20,9 @@ $( document ).ready( function () {
 
         $( "#discussions" ).show();
         $( "#discussions" ).text( "Loading..." );
-        $.getJSON( API_ROOT + "?action=query&prop=revisions&rvprop=content&format=jsonfm&titles=" + pageTitle + API_SUFFIX, function ( data ) {
+
+        var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + pageTitle + API_SUFFIX;
+        $.getJSON( apiUrl, function ( data ) {
             try {
                 var pageid = Object.getOwnPropertyNames( data.query.pages )[0];
 
@@ -42,9 +45,20 @@ $( document ).ready( function () {
                 return;
             }
             $( "#discussions" ).empty();
+
+            // We substring window.location.href because it already has the "page=___" stuff
+            $( "#discussions" ).append( $( "<p>" )
+                                        .addClass( "permalink" )
+                                        .append( "(" )
+                                        .append( $( "<a>" )
+                                                 .attr( "href", window.location.href.
+                                                        substring(0,window.location.href.indexOf("#page=")) +
+                                                        "#page=" + encodeURIComponent( pageTitle ) )
+                                                 .text( "permalink" ) )
+                                        .append( " to these results)" ) );
             var sectionHeaders = pageText.match( /==+.+?==+/g );
             if ( VoteHistorySpecialCases.check( pageTitle ) ) {
-                $( "#discussions" ).empty().append( $( "<div>" )
+                $( "#discussions" ).append( $( "<div>" )
                                                     .addClass( "successbox" )
                                                     .text( "Special discussion page detected at " )
                                                     .append( $( "<a> " )
@@ -53,12 +67,13 @@ $( document ).ready( function () {
                 analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ) );
             } else if ( !sectionHeaders ) {
                 if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
-                    $( "#discussions" ).empty().append( $( "<div>" )
-                                                        .addClass( "successbox" )
-                                                        .text( "Single-discussion page detected at " )
-                                                        .append( $( "<a> " )
-                                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                                 .text( pageTitle ) ) );
+                    $( "#discussions" ).append( $( "<div>" )
+                                                .addClass( "successbox" )
+                                                .append( "Single-discussion page detected at " )
+                                                .append( $( "<a> " )
+                                                         .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
+                                                         .text( pageTitle ) )
+                                                .append( "." ) );
                     analyzeDiscussion( pageText );
                 } else {
                     $( "#discussions" ).hide();
@@ -218,7 +233,7 @@ $( document ).ready( function () {
     }
 
     var appendVoteGraphTo = function ( location, voteObjects ) {
-        const WIDTH = 700, HEIGHT = 250, MARGIN = { top: 15, bottom: 25, left: 50, right: 100 };
+        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
@@ -280,10 +295,8 @@ $( document ).ready( function () {
     $( "#submit" ).click( function () {
         listDiscussions();
     } );
-    $( "#page" ).keyup( function ( e ) {
-        // Update hash
-        window.location.hash = '#page=' + encodeURIComponent($(this).val());
 
+    $( "#page" ).keyup( function ( e ) {
         if ( e.keyCode == 13 ) {
 
             // Enter was pressed in the username field

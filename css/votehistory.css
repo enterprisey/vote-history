@@ -3,6 +3,9 @@ body {
     color: #333;
     margin: 40px auto;
     max-width: 800px;
+    font-size: 16px;
+    font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+    background-color: #F3F3F3;
 }
 
 h2 {
@@ -45,6 +48,16 @@ a:hover {
     margin: 1em 0;
 }
 
+#page {
+    width: 50%;
+}
+
+svg {
+    background-color: white;
+    border: thin solid gray;
+    padding: 1em;
+}
+
 .line {
     fill: none;
     stroke: gray;
@@ -73,14 +86,10 @@ text.delete, text.oppose {
     shape-rendering: crispEdges;
 }
 
-.x.axis path {
-    display: none;
-}
-
 #analysis table {
     border-collapse: collapse;
     border-spacing: 0;
-    margin: 20px;
+    background-color: white;
 }
 
 #analysis table caption {
@@ -91,4 +100,8 @@ text.delete, text.oppose {
 #analysis table th, #analysis table td {
     border: thin solid gray;
     padding: 5px;
+}
+
+.permalink {
+    font-size: smaller;
 }
