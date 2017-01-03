@@ -278,14 +278,12 @@ $( document ).ready( function () {
             } );
         var svg = d3.select( location ).append( "svg" )
             .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
-            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom)
-            .attr( "transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")" );
+            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom);
         svg.append( "g" ).call( xAxis )
             .attr( "class", "x axis" )
             .attr( "transform", "translate(0," + HEIGHT + ")" );
         svg.append( "g" ).call( yAxis )
-            .attr( "class", "y axis" )
-            .attr( "transform", "translate(0,0)" );
+            .attr( "class", "y axis" );
         for ( var voteType in voteTotals ) {
             var specificVotes = [];
             for ( var key in voteObjects ) {
@@ -345,8 +343,7 @@ $( document ).ready( function () {
         var svg = d3.select( location ).append( "svg" )
             .attr( "class", "support" )
             .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
-            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom)
-            .attr( "transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")" );
+            .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom);
 
         // Background color
         var backgroundRectHeight = HEIGHT/((yExtent[1] - yExtent[0])*100);
@@ -371,10 +368,9 @@ $( document ).ready( function () {
         // Axes
         svg.append( "g" ).call( xAxis )
             .attr( "class", "x axis" )
-            .attr( "transform", "translate(0," + (HEIGHT) + ")" );
+            .attr( "transform", "translate(0," + HEIGHT + ")" );
         svg.append( "g" ).call( yAxis )
-            .attr( "class", "y axis" )
-            .attr( "transform", "translate(0,0)" );
+            .attr( "class", "y axis" );
 
         // The data line
         svg.append( "path" )

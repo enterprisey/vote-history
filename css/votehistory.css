@@ -56,6 +56,9 @@ svg {
     background-color: white;
     border: thin solid gray;
     padding: 1em;
+    padding-left: 4.125em;
+    padding-top: 2em;
+    overflow: visible;
 }
 
 .line {
