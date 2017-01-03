@@ -71,9 +71,11 @@ $( document ).ready( function () {
                                                      .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                      .text( pageTitle ) )
                                             .append( "." ) );
-                var showSupportPercentageGraph = pageTitle.startsWith( "Wikipedia:Requests for adminship/" );
                 analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
-                                   showSupportPercentageGraph );
+                                   {
+                                       "showSupportPercentageGraph": pageTitle.startsWith( "Wikipedia:Requests for adminship/" ),
+                                       "scrollTo": window.location.hash
+                                   } );
             } else if ( !sectionHeaders ) {
                 if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
                     $( "#discussions" ).append( $( "<div>" )
@@ -83,7 +85,7 @@ $( document ).ready( function () {
                                                          .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                          .text( pageTitle ) )
                                                 .append( "." ) );
-                    analyzeDiscussion( pageText );
+                    analyzeDiscussion( pageText, { "scrollTo": window.location.hash } );
                 } else {
                     $( "#discussions" ).hide();
                     $( "#error" ).empty().show();
@@ -132,7 +134,12 @@ $( document ).ready( function () {
         return matches;
     }
 
-    var analyzeDiscussion = function ( discussionText, showSupportPercentageTable ) {
+    /*
+     * Options:
+     *  - showSupportPercentageGraph (boolean) - true if the "support percentage graph" should be shown
+     *  - scrollTo (string) - id of the element to scroll to after everything's been displayed (default is "analysis")
+     */
+    var analyzeDiscussion = function ( discussionText, options ) {
         $( "#analysis" )
             .show()
             .empty();
@@ -199,7 +206,7 @@ $( document ).ready( function () {
         appendVoteGraphTo( "#vote-totals-graph", filteredVoteObjects );
 
         // Show support percentage table
-        if( showSupportPercentageTable ) {
+        if( options.showSupportPercentageTable ) {
             $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2></section>" );
             appendSupportPercentageGraphTo( "#support-percentage-graph", filteredVoteObjects );
         }
@@ -242,9 +249,7 @@ $( document ).ready( function () {
                                                           voteObject.time.format( "HH:mm, D MMMM YYYY" ) ) );
         } );
 
-        if( $( "#analysis" ).offset().top > ( $( window ).scrollTop() + $( window ).height() ) ) {
-            window.scrollTo( 0, $( "#analysis" ).offset().top );
-        }
+        scrollToElementWithId( options.scrollTo ? options.scrollTo : "analysis" );
     }
 
     var appendVoteGraphTo = function ( location, voteObjects ) {
@@ -404,6 +409,13 @@ $( document ).ready( function () {
         if( pageArgMatch && pageArgMatch[1] ) {
             $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ) ) );
             $( "#submit" ).trigger( "click" );
+        }
+    }
+
+    function scrollToElementWithId( id ) {
+        if( !id.startsWith( "#" ) ) id = "#" + id;
+        if( $( id ).offset().top > ( $( window ).scrollTop() + $( window ).height() ) ) {
+            window.scrollTo( 0, $( id ).offset().top );
         }
     }
 } );
