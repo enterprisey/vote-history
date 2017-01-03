@@ -413,9 +413,9 @@ $( document ).ready( function () {
     }
 
     function scrollToElementWithId( id ) {
-        if( !id.startsWith( "#" ) ) id = "#" + id;
-        if( $( id ).offset().top > ( $( window ).scrollTop() + $( window ).height() ) ) {
-            window.scrollTo( 0, $( id ).offset().top );
+        if( id.startsWith( "#" ) ) id = id.replace( "#", "" );
+        if( document.getElementById( id ) ) {
+            window.scrollTo( 0, $( "#" + id ).offset().top );
         }
     }
 } );
