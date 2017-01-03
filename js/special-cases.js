@@ -1,26 +1,32 @@
+/* exported VoteHistorySpecialCases */
 var VoteHistorySpecialCases = {
     functions: {
         "Wikipedia:Articles for deletion/": function ( pageText ) {
 
             // Everything after the timestamp of the nom statement.
-            return pageText
-                .match( /\d\d:\d\d,\s\d\d\s\w+\s\d\d\d\d\s\(UTC\)[\S\s]+/ )
-                .replace( /\d\d:\d\d,\s\d\d\s\w+\s\d\d\d\d\s\(UTC\)/, "" );
+            var TIMESTAMP_REGEX = /\d\d:\d\d,\s\d\d\s\w+\s\d\d\d\d\s\(UTC\)/;
+            var afterFirstHeader = pageText.substr( pageText.indexOf( "===" ) + 1 );
+            var nomStatementTimestampMatch = TIMESTAMP_REGEX.exec( afterFirstHeader );
+            if( nomStatementTimestampMatch ) {
+                pageText = pageText.substr( nomStatementTimestampMatch.index );
+            }
+            return pageText;
         },
         "Wikipedia:Templates for discussion/Log/": this.tfd,
         "Wikipedia:Categories for discussion/Log/": this.cfd,
         "Wikipeda:Redirects for discussion/Log/": this.rfd,
         "Wikipedia:Miscellany for deletion": this.mfd,
         "Wikipedia:Requests for adminship/": function ( pageText ) {
+            var result;
             if ( pageText.match( /=====Support=====/ ) ) {
-                var result = pageText
+                result = pageText
                     .match( /=====Support=====[\S\s]+/ )[0]
                     .replace( /=====Support=====/, "" )
                     .replace( /=====Oppose=====/, "" )
                     .replace( /=====Neutral=====/, "" );
                 return result;
             } else {
-                var result = pageText
+                result = pageText
                     .match( /====Discussion====[\S\s]+/ )[ 0 ]
                     .replace( /====Discussion====/, "" );
                 return result;
@@ -44,4 +50,4 @@ var VoteHistorySpecialCases = {
         // Do I have a function for this sort of page?
         return !!this.getFunction( title );
     }
-}
+};

@@ -1,4 +1,5 @@
 /* jshint moz: true */
+/* global VoteHistorySpecialCases, moment */
 $( document ).ready( function () {
     const API_ROOT = "https://en.wikipedia.org/w/api.php",
           API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
@@ -72,6 +73,7 @@ $( document ).ready( function () {
                                                      .text( pageTitle ) )
                                             .append( "." ) );
                 analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
+                                   pageTitle,
                                    {
                                        "showSupportPercentageGraph": pageTitle.startsWith( "Wikipedia:Requests for adminship/" ),
                                        "scrollTo": window.location.hash
@@ -85,7 +87,7 @@ $( document ).ready( function () {
                                                          .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                          .text( pageTitle ) )
                                                 .append( "." ) );
-                    analyzeDiscussion( pageText, { "scrollTo": window.location.hash } );
+                    analyzeDiscussion( pageText, pageTitle, { "scrollTo": window.location.hash } );
                 } else {
                     $( "#discussions" ).hide();
                     $( "#error" ).empty().show();
@@ -111,7 +113,7 @@ $( document ).ready( function () {
 
                     var votes = getVotes( section );
                     var disabledAttr = votes ? {} : { "disabled": "disabled" };
-                    var analyzeHandler = function ( e ) { analyzeDiscussion( section ); };
+                    var analyzeHandler = function () { analyzeDiscussion( section, pageTitle, {} ); };
                     $( "#discussions" ).append( $( "<div>" )
                                                 .addClass( "discussion" )
                                                 .append( $( "<button>" )
@@ -128,7 +130,7 @@ $( document ).ready( function () {
         } ); // end JSON query handler
     }; // end listDiscussions()
 
-    var getVotes = function ( voteText ) {
+    function getVotes ( voteText ) {
         voteText = voteText.replace( /=.+?=/, "" ).replace( /#/g, "*" );
         var matches = voteText.match( /\*\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)/g );
         return matches;
@@ -139,7 +141,7 @@ $( document ).ready( function () {
      *  - showSupportPercentageGraph (boolean) - true if the "support percentage graph" should be shown
      *  - scrollTo (string) - id of the element to scroll to after everything's been displayed (default is "analysis")
      */
-    var analyzeDiscussion = function ( discussionText, options ) {
+    function analyzeDiscussion ( discussionText, pageTitle, options ) {
         $( "#analysis" )
             .show()
             .empty();
@@ -156,17 +158,21 @@ $( document ).ready( function () {
         votes.forEach( function ( voteText ) {
             var vote = voteText.match( /'''.+?'''/ )[0].replace( /'''/g, "" ),
                 timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d/ )[0];
-            vote = vote.replace( /Obvious/, "" ).replace( /Speedy/, "" ).trim();
+            vote = vote
+                .replace( /Obvious/i, "" )
+                .replace( /Speedy/i, "" )
+                .replace( /Strong/i, "" )
+                .trim();
 
-	    // Votes that contain the string "support" (or "oppose", etc)
-	    // are treated as if they consisted entirely of "support" (etc)
+            // Votes that contain the string "support" (or "oppose", etc)
+            // are treated as if they consisted entirely of "support" (etc)
             [ "support", "oppose", "neutral" ].forEach( function ( voteType ) {
                 if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
                     vote = voteType.charAt( 0 ).toUpperCase() + voteType.substring( 1 );
                 }
             } );
 
-	    // All other votes are transformed from xXxXx (or whatever) to Xxxxx
+            // All other votes are transformed from xXxXx (or whatever) to Xxxxx
             vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
             var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
             voteObjects.push( voteObject );
@@ -184,16 +190,23 @@ $( document ).ready( function () {
         } );
 
         // We don't want options with only one vote to show up in the table
+        // But, "important" votes should always be shown, even if there's only one of them
+        var is_vote_important = function () { return false; };
+        if( pageTitle.startsWith( "Wikipedia:Articles for deletion/" ) ) {
+            is_vote_important = function ( vote ) {
+                return /(?:strong\s)?(?:keep|delete|merge)/.test( vote.toLowerCase() );
+            };
+        }
         var allowedVotes = Object.keys( voteTallies ).filter( function ( vote ) {
-            return voteTallies[ vote ] > 1;
+            return voteTallies[ vote ] > 1 || is_vote_important( vote );
         } );
 
-        // One of "Support" or "Oppose" present -> the other should also be shown
+        // If there's one "Support" or "Oppose" vote, the other type should also be shown
 	if( allowedVotes.indexOf( "Support" ) > -1 && allowedVotes.indexOf( "Oppose" ) === -1 ) {
-	    allowedVotes.push( "Oppose" );
+            allowedVotes.push( "Oppose" );
 	}
 	if( allowedVotes.indexOf( "Oppose" ) > -1 && allowedVotes.indexOf( "Support" ) === -1 ) {
-	    allowedVotes.push( "Support" );
+            allowedVotes.push( "Support" );
 	}
 
 	// Actually filter the vote objects
@@ -216,11 +229,11 @@ $( document ).ready( function () {
 	// Bring "Support"/"Oppose"/"Neutral" to the front in that order
 	var fixedVoteTypes = [ "Support", "Oppose", "Neutral" ];
 	for( var i = 0; i < fixedVoteTypes.length; i++ ) {
-	    var currentIndex = voteTypes.indexOf( fixedVoteTypes[ i ] );
-	    if( currentIndex > 0 ) {
+            var currentIndex = voteTypes.indexOf( fixedVoteTypes[ i ] );
+            if( currentIndex > 0 ) {
 		voteTypes[ currentIndex ] = voteTypes[ i ];
 		voteTypes[ i ] = fixedVoteTypes[ i ];
-	    }
+            }
 	}
 
 	// Show the vote tally table
@@ -239,8 +252,8 @@ $( document ).ready( function () {
         var numVotesFiltered = voteObjects.length - filteredVoteObjects.length;
         if( numVotesFiltered > 0 ) {
             $( "#vote-list" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
-                                    ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
-				    ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
+                                     ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
+                                     ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
         }
 
         $( "#vote-list" ).append( $( "<ul>" ) );
@@ -252,18 +265,19 @@ $( document ).ready( function () {
         scrollToElementWithId( options.scrollTo ? options.scrollTo : "analysis" );
     }
 
-    var appendVoteGraphTo = function ( location, voteObjects ) {
+    function appendVoteGraphTo ( location, voteObjects ) {
         const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 0 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
-        var earliestVoteTime = xScale.domain()[ 0 ]
 
         var voteTotals = {};
-        voteObjects.forEach( function ( voteObject ) { voteTotals[ voteObject.vote ] = 1 + voteTotals[ voteObject.vote ] || 0; } )
+        voteObjects.forEach( function ( voteObject ) {
+            voteTotals[ voteObject.vote ] = 1 + voteTotals[ voteObject.vote ] || 0;
+        } );
         var yScale = d3.scale.linear()
             .range( [ HEIGHT, 0 ] )
-            .domain( [ 0, d3.max( $.map( voteTotals, function ( value, key ) { return value; } ) ) + 5 ] );
+            .domain( [ 0, d3.max( $.map( voteTotals, function ( value ) { return value; } ) ) + 5 ] );
 
         var xAxis = d3.svg.axis()
             .scale( xScale )
@@ -319,16 +333,16 @@ $( document ).ready( function () {
     // This version uses background colors
     function appendSupportPercentageGraphTo ( location, voteObjects ) {
         const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 0 };
+        var i;
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
-        var earliestVoteTime = xScale.domain()[ 0 ];
 
         // Calculate the highest and lowest percentages reached, for the y-scale
         var runningSupports = 0,
             runningOpposes = 0;
         var percentages = [];
-        for(var i = 0; i < voteObjects.length; i++) {
+        for(i = 0; i < voteObjects.length; i++) {
             if( voteObjects[i].vote === "Support" ) runningSupports++;
             if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
             percentages.push( {
@@ -336,7 +350,7 @@ $( document ).ready( function () {
                 "percentage": runningSupports / ( runningSupports + runningOpposes )
             } );
         }
-        var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } )
+        var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
         var yScale = d3.scale.linear()
             .range( [ HEIGHT, 0 ] )
             .domain( yExtent );
@@ -348,7 +362,6 @@ $( document ).ready( function () {
             .tickFormat( function ( tickData ) { return d3.format(".0%")(tickData); } )
             .scale( yScale )
             .orient( "left" );
-        var voteRunningTotals = {};
         var line = d3.svg.line()
             .x( function ( d ) { return xScale( d.time ); } )
             .y( function ( d ) { return yScale( d.percentage ); } );
@@ -359,7 +372,7 @@ $( document ).ready( function () {
 
         // Background color
         var backgroundRectHeight = HEIGHT/((yExtent[1] - yExtent[0])*100);
-        for( var i = Math.floor(yExtent[0]*100)+1; i <= Math.floor(yExtent[1]*100); i++ ) {
+        for( i = Math.floor(yExtent[0]*100)+1; i <= Math.floor(yExtent[1]*100); i++ ) {
             svg.append( "rect" )
                 .attr( "class", "background" )
                 .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[i] )
