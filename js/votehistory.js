@@ -253,7 +253,7 @@ $( document ).ready( function () {
     }
 
     var appendVoteGraphTo = function ( location, voteObjects ) {
-        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
+        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 0 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
@@ -318,7 +318,7 @@ $( document ).ready( function () {
 
     // This version uses background colors
     function appendSupportPercentageGraphTo ( location, voteObjects ) {
-        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 100 };
+        const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 0 };
         var xScale = d3.time.scale()
             .range( [ 0, WIDTH ] )
             .domain( d3.extent( voteObjects, function ( d ) { return d.time; } ) );
