@@ -284,9 +284,16 @@ $( document ).ready( function () {
         var svg = d3.select( location ).append( "svg" )
             .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
             .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom);
+
+        // We rotate the tick labels so they don't overlap
+        // Source: http://stackoverflow.com/a/16863559/1757964
         svg.append( "g" ).call( xAxis )
             .attr( "class", "x axis" )
-            .attr( "transform", "translate(0," + HEIGHT + ")" );
+            .attr( "transform", "translate(0," + HEIGHT + ")" )
+            .selectAll( "text" )
+            .style("text-anchor", "end")
+            .attr( "transform", "rotate(-35)" );
+
         svg.append( "g" ).call( yAxis )
             .attr( "class", "y axis" );
         for ( var voteType in voteTotals ) {
@@ -373,7 +380,10 @@ $( document ).ready( function () {
         // Axes
         svg.append( "g" ).call( xAxis )
             .attr( "class", "x axis" )
-            .attr( "transform", "translate(0," + HEIGHT + ")" );
+            .attr( "transform", "translate(0," + HEIGHT + ")" )
+            .selectAll( "text" )
+            .style("text-anchor", "end")
+            .attr( "transform", "rotate(-35)" );
         svg.append( "g" ).call( yAxis )
             .attr( "class", "y axis" );
 
