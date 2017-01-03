@@ -46,16 +46,22 @@ $( document ).ready( function () {
             }
             $( "#discussions" ).empty();
 
-            // We substring window.location.href because it already has the "page=___" stuff
+            // Generate and display permalink
+            // We want what's in the address bar without the ?=___ or #___ stuff
+            var permalinkSubstringMatch = /[\#\?]/.exec(window.location.href);
+            var permalink = window.location.href;
+            if( permalinkSubstringMatch ) {
+                permalink = window.location.href.substring( 0, permalinkSubstringMatch.index );
+            }
+            permalink += "?page=" + encodeURIComponent( pageTitle );
             $( "#discussions" ).append( $( "<p>" )
                                         .addClass( "permalink" )
                                         .append( "(" )
                                         .append( $( "<a>" )
-                                                 .attr( "href", window.location.href.
-                                                        substring(0,window.location.href.indexOf("#page=")) +
-                                                        "#page=" + encodeURIComponent( pageTitle ) )
+                                                 .attr( "href", permalink )
                                                  .text( "permalink" ) )
                                         .append( " to these results)" ) );
+
             var sectionHeaders = pageText.match( /==+.+?==+/g );
             if ( VoteHistorySpecialCases.check( pageTitle ) ) {
                 $( "#discussions" ).append( $( "<div>" )
@@ -129,8 +135,7 @@ $( document ).ready( function () {
     var analyzeDiscussion = function ( discussionText, showSupportPercentageTable ) {
         $( "#analysis" )
             .show()
-            .empty()
-            .append( $( "<h2>" ).text( "Graph of vote totals over time" ) );
+            .empty();
 
         var votes = getVotes( discussionText );
         if ( !votes ) {
@@ -190,12 +195,13 @@ $( document ).ready( function () {
         } );
 
 	// Show the vote graph
-        appendVoteGraphTo( "#analysis", filteredVoteObjects );
+        $( "#analysis" ).append( "<section id='vote-totals-graph'><h2>Vote totals graph</h2></section>" );
+        appendVoteGraphTo( "#vote-totals-graph", filteredVoteObjects );
 
         // Show support percentage table
         if( showSupportPercentageTable ) {
-            $( "#analysis" ).append( "<h2>Support percentage graph</h2>" );
-            appendSupportPercentageGraphTo( "#analysis", filteredVoteObjects );
+            $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2></section>" );
+            appendSupportPercentageGraphTo( "#support-percentage-graph", filteredVoteObjects );
         }
 
 	var voteTypes = allowedVotes;
@@ -211,29 +217,28 @@ $( document ).ready( function () {
 	}
 
 	// Show the vote tally table
-        $( "#analysis" ).append( "<h2>Vote tally</h2>" );
-        $( "#analysis" ).append( "<table><tr></tr></table>" );
+        $( "#analysis" ).append( "<section id='vote-tally'><h2>Vote tally</h2><table><tr></tr></table></section>" );
         voteTypes.forEach( function ( voteType ) {
-            $( "#analysis table tr" ).append( $( "<th>" ).text( voteType ) );
+            $( "#vote-tally table tr" ).append( $( "<th>" ).text( voteType ) );
         } );
-        $( "#analysis table" ).append( "<tr></tr>" );
+        $( "#vote-tally table" ).append( "<tr></tr>" );
         voteTypes.forEach( function ( voteType ) {
-            $( "#analysis table tr" ).last().append( $( "<td>" ).text( voteTallies[ voteType ] ) );
+            $( "#vote-tally table tr" ).last().append( $( "<td>" ).text( voteTallies[ voteType ] ) );
         } );
 
-        $( "#analysis" ).append( "<h2>Vote list</h2>" );
+        $( "#analysis" ).append( "<section id='vote-list'><h2>Vote list</h2></section>" );
 
         // Show a note if we filtered any votes
         var numVotesFiltered = voteObjects.length - filteredVoteObjects.length;
         if( numVotesFiltered > 0 ) {
-            $( "#analysis" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
+            $( "#vote-list" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
                                     ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
 				    ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
         }
 
-        $( "#analysis" ).append( $( "<ul>" ) );
+        $( "#vote-list" ).append( $( "<ul>" ) );
         voteObjects.forEach( function ( voteObject ) {
-            $( "#analysis ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
+            $( "#vote-list ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
                                                           voteObject.time.format( "HH:mm, D MMMM YYYY" ) ) );
         } );
 
@@ -391,10 +396,19 @@ $( document ).ready( function () {
         }
     } );
 
-    // Allow user to be specified in hash in the form `#page=Example`
-    if ( window.location.hash ) {
-      $( "#page" ).val( decodeURIComponent( window.location.hash.replace( /^#page=/, "" ) ) );
-      $( "#submit" ).trigger( "click" );
+    if ( window.location.hash && window.location.hash.indexOf( "#page=" ) >= 0 ) {
+
+        // In the past, we let the hash specify the user, like #page=Example
+        $( "#page" ).val( decodeURIComponent( window.location.hash.replace( /^#page=/, "" ) ) );
+        $( "#submit" ).trigger( "click" );
+    } else if( window.location.search.substring( 1 ).indexOf( "page=" ) >= 0 ) {
+
+        // Allow the user to be specified in the query string, like ?page=Example
+        var pageArgMatch = /&?page=([^&#]*)/.exec( window.location.search.substring( 1 ) );
+        if( pageArgMatch && pageArgMatch[1] ) {
+            $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ) ) );
+            $( "#submit" ).trigger( "click" );
+        }
     }
 } );
 
