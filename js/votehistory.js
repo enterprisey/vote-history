@@ -206,7 +206,7 @@ $( document ).ready( function () {
         appendVoteGraphTo( "#vote-totals-graph", filteredVoteObjects );
 
         // Show support percentage table
-        if( options.showSupportPercentageTable ) {
+        if( options.showSupportPercentageGraph ) {
             $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2></section>" );
             appendSupportPercentageGraphTo( "#support-percentage-graph", filteredVoteObjects );
         }
