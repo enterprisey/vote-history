@@ -21,8 +21,8 @@ var VoteHistorySpecialCases = {
             // Numbered comments get their section header prepended and bolded
             var pageTextLines = pageText.split( "\n" );
             var currentSection;
-            var HEADER_REGEX = /=====\s*([\w\s]+)\s*=====/;
-            var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))/;
+            var HEADER_REGEX = /(?:'''|=====)\s*([\w\s]+)\s*(?:'''|=====)/;
+            var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
             for( var i = 0; i < pageTextLines.length; i++ ) {
                 var m = HEADER_REGEX.exec( pageTextLines[i] );
                 if( m && m[1] &&
@@ -37,7 +37,8 @@ var VoteHistorySpecialCases = {
                         m2[1] &&
                         !m2[1].startsWith( "#" ) &&
                         !m2[1].startsWith( ":" ) &&
-                        !m2[1].startsWith( "'''" + currentSection ) ) {
+                        !m2[1].startsWith( "*" ) &&
+                        !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
                         pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
                     }
                 }
@@ -51,10 +52,16 @@ var VoteHistorySpecialCases = {
                     .replace( /=====Support=====/, "" )
                     .replace( /=====Oppose=====/, "" )
                     .replace( /=====Neutral=====/, "" );
-            } else {
+            } else if( pageText.match( /====Discussion====/ ) ) {
                 pageText = pageText
                     .match( /====Discussion====[\S\s]+/ )[ 0 ]
                     .replace( /====Discussion====/, "" );
+            } else if( pageText.match( /'''Discussion'''/ ) ) {
+                pageText = pageText
+                    .match( /'''Support'''[\S\s]+/ )[0]
+                    .replace( /'''Support'''/, "" )
+                    .replace( /'''Oppose'''/, "" )
+                    .replace( /'''Neutral'''/, "" );
             }
             return pageText;
         },

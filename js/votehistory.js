@@ -131,8 +131,8 @@ $( document ).ready( function () {
     }; // end listDiscussions()
 
     function getVotes ( voteText ) {
-        voteText = voteText.replace( /=.+?=/, "" ).replace( /#/g, "*" );
-        var matches = voteText.match( /\*\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)/g );
+        voteText = voteText.replace( /=.+?=/, "" );
+        var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)\s*$/mg );
         return matches;
     }
 
@@ -156,8 +156,8 @@ $( document ).ready( function () {
 
         var voteObjects = [];
         votes.forEach( function ( voteText ) {
-            var vote = voteText.match( /'''.+?'''/ )[0].replace( /'''/g, "" ),
-                timestamp = voteText.match( /\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d/ )[0];
+            var vote = voteText.match( /'''(.+?)'''/ )[1],
+                timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)\s*$/ )[1];
             vote = vote
                 .replace( /Obvious/i, "" )
                 .replace( /Speedy/i, "" )
