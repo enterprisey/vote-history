@@ -17,20 +17,46 @@ var VoteHistorySpecialCases = {
         "Wikipeda:Redirects for discussion/Log/": this.rfd,
         "Wikipedia:Miscellany for deletion": this.mfd,
         "Wikipedia:Requests for adminship/": function ( pageText ) {
-            var result;
-            if ( pageText.match( /=====Support=====/ ) ) {
-                result = pageText
+
+            // Numbered comments get their section header prepended and bolded
+            var pageTextLines = pageText.split( "\n" );
+            var currentSection;
+            var HEADER_REGEX = /=====\s*([\w\s]+)\s*=====/;
+            var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))/;
+            for( var i = 0; i < pageTextLines.length; i++ ) {
+                var m = HEADER_REGEX.exec( pageTextLines[i] );
+                if( m && m[1] &&
+                    ( m[1] == "Support" ||
+                      m[1] == "Oppose" ||
+                      m[1] == "Neutral" ) ) {
+                    currentSection = m[1];
+                } else {
+                    if( !currentSection ) continue;
+                    var m2 = VOTE_REGEX.exec( pageTextLines[i] );
+                    if( m2 &&
+                        m2[1] &&
+                        !m2[1].startsWith( "#" ) &&
+                        !m2[1].startsWith( ":" ) &&
+                        !m2[1].startsWith( "'''" + currentSection ) ) {
+                        pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
+                    }
+                }
+            }
+            pageText = pageTextLines.join( "\n" );
+
+            // Strip headers
+            if( pageText.match( /=====Support=====/ ) ) {
+                pageText = pageText
                     .match( /=====Support=====[\S\s]+/ )[0]
                     .replace( /=====Support=====/, "" )
                     .replace( /=====Oppose=====/, "" )
                     .replace( /=====Neutral=====/, "" );
-                return result;
             } else {
-                result = pageText
+                pageText = pageText
                     .match( /====Discussion====[\S\s]+/ )[ 0 ]
                     .replace( /====Discussion====/, "" );
-                return result;
             }
+            return pageText;
         },
         "Wikipedia:Requests for bureaucratship/": this.rfb
     },
