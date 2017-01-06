@@ -113,7 +113,7 @@ $( document ).ready( function () {
 
                     var votes = getVotes( section );
                     var disabledAttr = votes ? {} : { "disabled": "disabled" };
-                    var analyzeHandler = function () { analyzeDiscussion( section, pageTitle, {} ); };
+                    var analyzeHandler = function () { analyzeDiscussion( section, pageTitle, { "scrollTo": "analysis" } ); };
                     $( "#discussions" ).append( $( "<div>" )
                                                 .addClass( "discussion" )
                                                 .append( $( "<button>" )
@@ -139,7 +139,7 @@ $( document ).ready( function () {
     /*
      * Options:
      *  - showSupportPercentageGraph (boolean) - true if the "support percentage graph" should be shown
-     *  - scrollTo (string) - id of the element to scroll to after everything's been displayed (default is "analysis")
+     *  - scrollTo (string) - id of the element to scroll to after everything's been displayed (default is not to scroll at all)
      */
     function analyzeDiscussion ( discussionText, pageTitle, options ) {
         $( "#analysis" )
@@ -262,7 +262,9 @@ $( document ).ready( function () {
                                                           voteObject.time.format( "HH:mm, D MMMM YYYY" ) ) );
         } );
 
-        scrollToElementWithId( options.scrollTo ? options.scrollTo : "analysis" );
+        if( options.scrollTo ) {
+            scrollToElementWithId( options.scrollTo );
+        }
     }
 
     function appendVoteGraphTo ( location, voteObjects ) {
