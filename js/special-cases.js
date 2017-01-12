@@ -18,32 +18,40 @@ var VoteHistorySpecialCases = {
         "Wikipedia:Miscellany for deletion": this.mfd,
         "Wikipedia:Requests for adminship/": function ( pageText ) {
 
+            // Strip struck stuff (it only confuses the parser)
+            pageText = pageText.replace( /<s>[\s\S]+?<\/s>/, "" );
+
             // Numbered comments get their section header prepended and bolded
-            var pageTextLines = pageText.split( "\n" );
-            var currentSection;
-            var HEADER_REGEX = /(?:'''|=====)\s*([\w\s]+)\s*(?:'''|=====)/;
-            var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
-            for( var i = 0; i < pageTextLines.length; i++ ) {
-                var m = HEADER_REGEX.exec( pageTextLines[i] );
-                if( m && m[1] &&
-                    ( m[1] == "Support" ||
-                      m[1] == "Oppose" ||
-                      m[1] == "Neutral" ) ) {
-                    currentSection = m[1];
-                } else {
-                    if( !currentSection ) continue;
-                    var m2 = VOTE_REGEX.exec( pageTextLines[i] );
-                    if( m2 &&
-                        m2[1] &&
-                        !m2[1].startsWith( "#" ) &&
-                        !m2[1].startsWith( ":" ) &&
-                        !m2[1].startsWith( "*" ) &&
-                        !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
-                        pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
+            if( pageText.match( /=====Support=====/ ) ) {
+                var pageTextLines = pageText.split( "\n" );
+                var currentSection;
+                var HEADER_REGEX = /^=====\s*([\w ]+?)\s*=====$/;
+                var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
+                for( var i = 0; i < pageTextLines.length; i++ ) {
+                    var m = HEADER_REGEX.exec( pageTextLines[i] );
+                    if( m && m[1] ) {
+                        if( m[1] == "Support" ||
+                            m[1] == "Oppose" ||
+                            m[1] == "Neutral" ) {
+                            currentSection = m[1];
+                        } else {
+                            currentSection = '';
+                        }
+                    } else {
+                        if( !currentSection ) continue;
+                        var m2 = VOTE_REGEX.exec( pageTextLines[i] );
+                        if( m2 &&
+                            m2[1] &&
+                            !m2[1].startsWith( "#" ) &&
+                            !m2[1].startsWith( ":" ) &&
+                            !m2[1].startsWith( "*" ) &&
+                            !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
+                            pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
+                        }
                     }
                 }
+                pageText = pageTextLines.join( "\n" );
             }
-            pageText = pageTextLines.join( "\n" );
 
             // Strip headers
             if( pageText.match( /=====Support=====/ ) ) {
