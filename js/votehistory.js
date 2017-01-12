@@ -4,6 +4,24 @@ const API_ROOT = "https://en.wikipedia.org/w/api.php",
       API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
       API_SUFFIX = "&format=json&callback=?&continue=";
 
+function getPageText( pageTitle ) {
+    var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + pageTitle + API_SUFFIX;
+    var deferred = $.Deferred();
+    $.getJSON( apiUrl )
+        .done( function ( data ) {
+            var pageid = Object.getOwnPropertyNames( data.query.pages )[0];
+            if ( data.query.pages[ pageid ].hasOwnProperty( "missing" ) ) {
+                deferred.reject( "missing" );
+            } else {
+                deferred.resolve( data.query.pages[ pageid ].revisions[0]["*"] );
+            }
+        } ).fail( function ( e ) {
+            deferred.reject( e );
+        } );
+    return deferred;
+}
+
+
 function listDiscussions() {
     var pageTitle = $( "#page" ).val().trim();
     $( "#error" ).hide();
@@ -21,29 +39,7 @@ function listDiscussions() {
     $( "#discussions" ).show();
     $( "#discussions" ).text( "Loading..." );
 
-    var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + pageTitle + API_SUFFIX;
-    $.getJSON( apiUrl, function ( data ) {
-        try {
-            var pageid = Object.getOwnPropertyNames( data.query.pages )[0];
-
-            if ( data.query.pages[ pageid ].hasOwnProperty( "missing" ) ) {
-                $( "#error" ).empty().show();
-                $( "#error" ).append( $( "<div> ")
-                                      .addClass( "errorbox" )
-                                      .text( "Page doesn't exist!" ) );
-                $( "#discussions" ).hide();
-                return;
-            }
-
-            var pageText = data.query.pages[ pageid ].revisions[0]["*"];
-        } catch ( e ) {
-            $( "#error" ).empty().show();
-            $( "#error" ).append( $( "<div> ")
-                                  .addClass( "errorbox" )
-                                  .text( "Error while loading page text: " + e.message ) );
-            $( "#discussions" ).hide();
-            return;
-        }
+    getPageText( pageTitle ).done( function ( pageText ) {
         $( "#discussions" ).empty();
 
         // Generate and display permalink
@@ -129,7 +125,20 @@ function listDiscussions() {
                                                                       "; " + section.length + " bytes" ) ) );
             } ); // end forEach on sectionHeaders
         } // end else block
-    } ); // end JSON query handler
+    } ).fail( function ( error ) {
+
+        // Handle an error in getPageText()
+        $( "#error" ).empty().show();
+        $( "#error" ).append( $( "<div> ")
+                              .addClass( "errorbox" )
+                              .text( error === "missing"
+                                     ? "Page doesn't exist!"
+                                     : "Error while loading page text" +
+                                     ( error && error.message
+                                       ? ": " + error.message
+                                       : "." ) ) );
+        $( "#discussions" ).hide();
+    } );
 }; // end listDiscussions()
 
 function getVoteMatches ( voteText ) {
@@ -181,26 +190,32 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         }
     } );
 
-    // We don't want options with only one vote to show up in the table
-    // But, "important" votes should always be shown, even if there's only one of them
-    var is_vote_important = function () { return false; };
-    if( pageTitle.startsWith( "Wikipedia:Articles for deletion/" ) ) {
-        is_vote_important = function ( vote ) {
-            return /(?:strong\s)?(?:keep|delete|merge)/.test( vote.toLowerCase() );
-        };
-    }
+    var allowedVoteTypes = [];
+    if( pageTitle.startsWith( "Wikipedia:Requests for adminship" ) ) {
+        allowedVoteTypes = [ "Support", "Oppose", "Neutral" ];
+    } else {
 
-    // ["Support", "Oppose", ...] but w/o votes appearing only once
-    var allowedVoteTypes = Object.keys( voteTallies ).filter( function ( vote ) {
-        return voteTallies[ vote ] > 1 || is_vote_important( vote );
-    } );
+        // We don't want options with only one vote to show up in the table
+        // But, "important" votes should always be shown, even if there's only one of them
+        var is_vote_important = function () { return false; };
+        if( pageTitle.startsWith( "Wikipedia:Articles for deletion/" ) ) {
+            is_vote_important = function ( vote ) {
+                return /(?:strong\s)?(?:keep|delete|merge)/.test( vote.toLowerCase() );
+            };
+        }
 
-    // If there's one "Support" or "Oppose" vote, the other type should also be shown
-    if( allowedVoteTypes.indexOf( "Support" ) > -1 && allowedVoteTypes.indexOf( "Oppose" ) === -1 ) {
-        allowedVoteTypes.push( "Oppose" );
-    }
-    if( allowedVoteTypes.indexOf( "Oppose" ) > -1 && allowedVoteTypes.indexOf( "Support" ) === -1 ) {
-        allowedVoteTypes.push( "Support" );
+        // ["Support", "Oppose", ...] but w/o votes appearing only once
+        allowedVoteTypes = Object.keys( voteTallies ).filter( function ( vote ) {
+            return voteTallies[ vote ] > 1 || is_vote_important( vote );
+        } );
+
+        // If there's one "Support" or "Oppose" vote, the other type should also be shown
+        if( allowedVoteTypes.indexOf( "Support" ) > -1 && allowedVoteTypes.indexOf( "Oppose" ) === -1 ) {
+            allowedVoteTypes.push( "Oppose" );
+        }
+        if( allowedVoteTypes.indexOf( "Oppose" ) > -1 && allowedVoteTypes.indexOf( "Support" ) === -1 ) {
+            allowedVoteTypes.push( "Support" );
+        }
     }
 
     // Actually filter the vote objects
@@ -437,35 +452,4 @@ function scrollToElementWithId( id ) {
         window.scrollTo( 0, $( "#" + id ).offset().top );
     }
 }
-
-document.addEventListener( "DOMContentLoaded", function () {
-
-    // Bind form submission handler to submission button & page field
-    $( "#submit" ).click( function () {
-        listDiscussions();
-    } );
-
-    $( "#page" ).keyup( function ( e ) {
-        if ( e.keyCode == 13 ) {
-
-            // Enter was released in the username field
-            $( "#submit" ).trigger( "click" );
-        }
-    } );
-
-    if ( window.location.hash && window.location.hash.indexOf( "#page=" ) >= 0 ) {
-
-        // In the past, we let the hash specify the user, like #page=Example
-        $( "#page" ).val( decodeURIComponent( window.location.hash.replace( /^#page=/, "" ) ) );
-        $( "#submit" ).trigger( "click" );
-    } else if( window.location.search.substring( 1 ).indexOf( "page=" ) >= 0 ) {
-
-        // Allow the user to be specified in the query string, like ?page=Example
-        var pageArgMatch = /&?page=([^&#]*)/.exec( window.location.search.substring( 1 ) );
-        if( pageArgMatch && pageArgMatch[1] ) {
-            $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ) ) );
-            $( "#submit" ).trigger( "click" );
-        }
-    }
-} );
 
