@@ -27,5 +27,13 @@ document.addEventListener( "DOMContentLoaded", function () {
             $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ) ) );
             $( "#submit" ).trigger( "click" );
         }
+    } else {
+
+        // Show some suggestions
+        $( "#suggestions" )
+            .hide();
+        getPageText( "Wikipedia:Requests for adminship/Recent" ).done( function ( pageText ) {
+            console.log(pageText.match(/{{[Rr]ecent RfX\|A\|([^|]+)/));
+        } );
     }
 } );
