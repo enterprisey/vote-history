@@ -1,0 +1,20 @@
+{
+  "name": "vote-history",
+  "version": "0.0.1",
+  "homepage": "http://tools.wmflabs.org/apersonbot/vote-history/",
+  "description": "A tool that displays the history of a Wikipedia vote or discussion.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/APerson241/vote-history"
+  },
+  "scripts": {
+    "test": "$(npm root)/mocha/bin/mocha"
+  },
+  "license": "",
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "moment": "^2.17.1",
+    "must": "^0.13.2",
+    "rewire": "^2.5.2"
+  }
+}

@@ -143,7 +143,11 @@ function listDiscussions() {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)[^\(\)]*$/mg );
+//    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)[^\(\)]*?$/mg );
+    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
+//    var i = 0;
+  //  console.log(voteText.substr(14000, 2000));
+    //matches.slice(29,32).forEach(function(x){console.log(++i + ". " + x)})//.substring(0,50));});
     return matches;
 }
 
@@ -181,12 +185,12 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     voteObjects.sort( function ( a, b ) { return a.time - b.time; } );
 
     // {"Support": 12, "Oppose": 6, ...}
-    var voteTallies = {};
+    var voteTally = {};
     voteObjects.forEach( function ( voteObject ) {
-        if( voteTallies.hasOwnProperty( voteObject.vote ) ) {
-            voteTallies[ voteObject.vote ]++;
+        if( voteTally.hasOwnProperty( voteObject.vote ) ) {
+            voteTally[ voteObject.vote ]++;
         } else {
-            voteTallies[ voteObject.vote ] = 1;
+            voteTally[ voteObject.vote ] = 1;
         }
     } );
 
@@ -205,8 +209,8 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         }
 
         // ["Support", "Oppose", ...] but w/o votes appearing only once
-        allowedVoteTypes = Object.keys( voteTallies ).filter( function ( vote ) {
-            return voteTallies[ vote ] > 1 || is_vote_important( vote );
+        allowedVoteTypes = Object.keys( voteTally ).filter( function ( vote ) {
+            return voteTally[ vote ] > 1 || is_vote_important( vote );
         } );
 
         // If there's one "Support" or "Oppose" vote, the other type should also be shown
@@ -217,6 +221,11 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
             allowedVoteTypes.push( "Support" );
         }
     }
+
+    // Zero out allowed votes that aren't in the tally yet
+    allowedVoteTypes.forEach( function ( voteType ) {
+        voteTally[ voteType ] = voteTally[ voteType ] || 0;
+    } );
 
     // Actually filter the vote objects
     var filteredVoteObjects = voteObjects.filter( function ( voteObject ) {
@@ -238,7 +247,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     return {
         "voteObjects": voteObjects,
         "filteredVoteObjects": filteredVoteObjects,
-        "voteTallies": voteTallies,
+        "voteTally": voteTally,
         "voteTypes": voteTypes
     };
 }
@@ -270,7 +279,7 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
     } );
     $( "#vote-tally table" ).append( "<tr></tr>" );
     discussionAnalysis.voteTypes.forEach( function ( voteType ) {
-        $( "#vote-tally table tr" ).last().append( $( "<td>" ).text( discussionAnalysis.voteTallies[ voteType ] || 0 ) );
+        $( "#vote-tally table tr" ).last().append( $( "<td>" ).text( discussionAnalysis.voteTally[ voteType ] || 0 ) );
     } );
 
     $( "#analysis" ).append( "<section id='vote-list'><h2>Vote list</h2></section>" );
@@ -380,6 +389,19 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
         } );
     }
     var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
+    if( yExtent[ 0 ] == yExtent [ 1 ] ) {
+
+        // The graph will be a line, so expand y-axis
+        if( yExtent[ 0 ] == 0 ) {
+
+            // % is always 0 -> make range 0% to 1%
+            yExtent[ 1 ] = 0.01;
+        } else {
+
+            // otherwise -> make range (x - 1)% to x%
+            yExtent[ 0 ] = yExtent[ 1 ] - 0.01;
+        }
+    }
     var yScale = d3.scale.linear()
         .range( [ HEIGHT, 0 ] )
         .domain( yExtent );
@@ -453,3 +475,8 @@ function scrollToElementWithId( id ) {
     }
 }
 
+// Export some functions for testing
+module.exports = {
+    "getPageText": getPageText,
+    "analyzeDiscussion": analyzeDiscussion
+};

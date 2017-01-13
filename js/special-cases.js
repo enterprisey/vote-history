@@ -19,7 +19,7 @@ var VoteHistorySpecialCases = {
         "Wikipedia:Requests for adminship/": function ( pageText ) {
 
             // Strip struck stuff (it only confuses the parser)
-            pageText = pageText.replace( /<s>[\s\S]+?<\/s>/, "" );
+            pageText = pageText.replace( /<s>[\s\S]+?<\/s>/g, "" );
 
             // Numbered comments get their section header prepended and bolded
             if( pageText.match( /=====Support=====/ ) ) {
@@ -27,6 +27,7 @@ var VoteHistorySpecialCases = {
                 var currentSection;
                 var HEADER_REGEX = /^=====\s*([\w ]+?)\s*=====$/;
                 var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
+                var genCommentsIndex = null;
                 for( var i = 0; i < pageTextLines.length; i++ ) {
                     var m = HEADER_REGEX.exec( pageTextLines[i] );
                     if( m && m[1] ) {
@@ -35,6 +36,9 @@ var VoteHistorySpecialCases = {
                             m[1] == "Neutral" ) {
                             currentSection = m[1];
                         } else {
+                            if( ( currentSection == "Neutral" ) && ( m[1] == "General comments" ) ) {
+                                genCommentsIndex = i;
+                            }
                             currentSection = '';
                         }
                     } else {
@@ -50,7 +54,8 @@ var VoteHistorySpecialCases = {
                         }
                     }
                 }
-                pageText = pageTextLines.join( "\n" );
+                var endLineIndex = genCommentsIndex ? genCommentsIndex : pageTextLines.length - 1;
+                pageText = pageTextLines.slice( 0, endLineIndex ).join( "\n" );
             }
 
             // Strip headers
@@ -92,3 +97,5 @@ var VoteHistorySpecialCases = {
         return !!this.getFunction( title );
     }
 };
+
+module.exports = VoteHistorySpecialCases;
