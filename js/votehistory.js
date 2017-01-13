@@ -143,11 +143,7 @@ function listDiscussions() {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-//    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)[^\(\)]*?$/mg );
     var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
-//    var i = 0;
-  //  console.log(voteText.substr(14000, 2000));
-    //matches.slice(29,32).forEach(function(x){console.log(++i + ". " + x)})//.substring(0,50));});
     return matches;
 }
 
