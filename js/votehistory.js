@@ -39,6 +39,13 @@ function listDiscussions() {
     $( "#discussions" ).show();
     $( "#discussions" ).text( "Loading..." );
 
+    // Preprocess title
+
+    // Replace aliases ([[WP:ALIAS]])
+    pageTitle = pageTitle
+        .replace( /^(WP|Project):/, "Wikipedia:" )
+        .replace( /^(WT|Project talk):/, "Wikipedia talk:" );
+
     getPageText( pageTitle ).done( function ( pageText ) {
         $( "#discussions" ).empty();
 
