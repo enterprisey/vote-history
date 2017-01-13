@@ -24,6 +24,14 @@ a:hover {
     text-decoration: underline;
 }
 
+#suggestions {
+    font-size: smaller;
+}
+
+#suggestions a:not(:last-child) {
+    margin-right: 1em;
+}
+
 .discussion {
     border: thin solid gray;
     padding: 1em;
