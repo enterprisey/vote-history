@@ -172,7 +172,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         // Votes that contain the string "support" (or "oppose", etc)
         // are treated as if they consisted entirely of "support" (etc)
-        [ "support", "oppose", "neutral" ].forEach( function ( voteType ) {
+        [ "support", "oppose", "neutral", "keep", "delete" ].forEach( function ( voteType ) {
             if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
                 vote = voteType.charAt( 0 ).toUpperCase() + voteType.substring( 1 );
             }
@@ -182,6 +182,12 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
         var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
         voteObjects.push( voteObject );
+    } );
+
+    // Comments and questions are never displayed
+    voteObjects = voteObjects.filter( function ( voteObject ) {
+        return ( voteObject.vote.toLowerCase().indexOf( "comment" ) === -1 ) &&
+            ( voteObject.vote.toLowerCase().indexOf( "question" ) === -1 );
     } );
 
     // Sort in order of ascending timestamps
