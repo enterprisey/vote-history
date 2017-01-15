@@ -419,7 +419,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
         .scale( xScale )
         .orient( "bottom" );
     var yAxis = d3.svg.axis()
-        .tickFormat( function ( tickData ) { return d3.format(".0%")(tickData); } )
+        .tickFormat( function ( tickData ) { return d3.format( ".0%" )( tickData ); } )
         .scale( yScale )
         .orient( "left" );
     var line = d3.svg.line()
@@ -433,7 +433,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
     // Background color
     var backgroundRectHeight = HEIGHT/( ( yExtent[1] - yExtent[0] ) * 100 );
 
-    // Explanation: yExtent contains percentages as decimals, but we want i
+    // yExtent contains percentages as decimals, but we want i
     // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
     // at 1, meaning 1%) to match the color coding keys
     for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= Math.floor( yExtent[1] * 100 ); i++ ) {
@@ -452,14 +452,6 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
             .attr( "height", localHeight );
     }
 
-    // Clip out the background color for the x-axis
-    svg.append( "rect" )
-        .style( "fill", "white" )
-        .attr( "x", 0 )
-        .attr( "y", HEIGHT )
-        .attr( "width", WIDTH )
-        .attr( "height", MARGIN.bottom );
-
     // Axes
     svg.append( "g" ).call( xAxis )
         .attr( "class", "x axis" )
@@ -475,6 +467,52 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
         .datum( percentages )
         .attr( "d", line )
         .attr( "class", "line percentage" );
+
+    // Tooltip
+    var tooltip = svg.append( "g" ).style( "display", "none" );
+
+    tooltip.append( "circle" )
+        .style( "fill", "none" )
+        .style( "stroke", "blue" )
+        .attr( "r", 4 );
+
+    tooltip.append( "text" )
+        .attr( "class", "time" )
+        .attr( "dy", -27 )
+        .style( "stroke", "black" )
+        .style( "stroke-width", "0.1px" );
+
+    tooltip.append( "text" )
+        .attr( "class", "percentage" )
+        .attr( "dy", -10 )
+        .style( "stroke", "none" );
+
+    // Element to capture mouse events
+    var mouseEventSinkId = "vh-mouse-event-sink";
+    svg.append( "rect" )
+        .attr( "id", mouseEventSinkId )
+        .attr( "width", WIDTH )
+        .attr( "height", HEIGHT )
+        .attr( "fill", "none" )
+        .style( "pointer-events", "all" )
+        .on( "mouseover", function () { tooltip.style( "display", null ); } )
+        .on( "mouseout", function () { tooltip.style( "display", "none" ); } );
+
+    document.getElementById( mouseEventSinkId ).addEventListener( "mousemove", function ( event ) {
+        var eventTime = xScale.invert( event.clientX - $( "#" + mouseEventSinkId ).offset().left );
+        var targetIndex = d3.bisector( function ( d ) { return d.time; } ).left( percentages, eventTime, 1 );
+        var leftDatapoint = percentages[ targetIndex - 1 ];
+        var rightDatapoint = percentages[ targetIndex ];
+        var datapoint = eventTime - leftDatapoint.time > rightDatapoint.time - eventTime ? rightDatapoint : leftDatapoint;
+        var transform = "translate(" + xScale( datapoint.time ) + ", " + yScale( datapoint.percentage ) + ")";
+        tooltip.select( "circle" ).attr( "transform", transform );
+        tooltip.select( "text.time" )
+            .attr( "transform", transform )
+            .text( datapoint.time.format( "HH:mm, D MMM YYYY" ) );
+        tooltip.select( "text.percentage" )
+                .attr( "transform", transform )
+            .text( d3.format( ".1%" )( datapoint.percentage ) );
+    } );
 }
 
 function scrollToElementWithId( id ) {

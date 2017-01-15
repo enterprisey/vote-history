@@ -45,6 +45,7 @@ document.addEventListener( "DOMContentLoaded", function () {
                              .click( function () {
                                  $( "#page" ).val( pageName );
                                  $( "#submit" ).trigger( "click" );
+                                 $( "#suggestions" ).fadeOut();
                              } ) );
             } );
             $( "#suggestions" ).fadeIn();
