@@ -28,7 +28,7 @@ var VoteHistorySpecialCases = {
                 var HEADER_REGEX = /=====Support=====/.test( pageText )
                     ? ( /^=====\s*([\w ]+?)\s*=====$/ )
                     : /^'''(\w+?)'''$/;
-                var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
+                var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\).*?)$/;
                 var genCommentsIndex = null;
                 for( var i = 0; i < pageTextLines.length; i++ ) {
                     var m = HEADER_REGEX.exec( pageTextLines[i] );
@@ -46,6 +46,7 @@ var VoteHistorySpecialCases = {
                     } else {
                         if( !currentSection ) continue;
                         var m2 = VOTE_REGEX.exec( pageTextLines[i] );
+                        console.log(m2);
                         if( m2 &&
                             m2[1] &&
                             !m2[1].startsWith( "#" ) &&

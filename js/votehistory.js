@@ -197,6 +197,7 @@ function listDiscussions() {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
+    console.log(voteText);
     var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
     return matches;
 }
@@ -212,6 +213,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ )[1];
         var username = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim();
+        console.log(vote + ", " + username + ", " + timestamp);
         vote = vote
             .replace( /Obvious/i, "" )
             .replace( /Speedy/i, "" )

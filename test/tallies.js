@@ -26,7 +26,11 @@ describe( "The parser", function () {
         }
 
         it( "(UTC))", function () {
-            expect( analyzeDiscussion( "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC))\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ]).to.equal( 2 );
+            expect( analyzeDiscussion( "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC))\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ] ).to.equal( 2 );
+        } );
+
+        it( "(UTC).</small><br />", function () {
+            expect( analyzeDiscussion( "#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:01, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC).</small><br />\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ] ).to.equal( 3 );
         } );
     } );
 
