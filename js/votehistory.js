@@ -211,7 +211,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ )[1];
-        var username = voteText.match( /\[\[[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" );
+        var username = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim();
         vote = vote
             .replace( /Obvious/i, "" )
             .replace( /Speedy/i, "" )
@@ -345,20 +345,30 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
 
     $( "#analysis" ).append( "<section id='vote-list'><h2>Vote list</h2></section>" );
 
-    // Show a note if we filtered any votes
+    // Show a note...
+
+    // ...about the sort order
+    var voteListNote = "Shown in time order.";
+
+    // ...if we filtered any votes
     var numVotesFiltered = discussionAnalysis.voteObjects.length -
         discussionAnalysis.filteredVoteObjects.length;
     if( numVotesFiltered > 0 ) {
-        $( "#vote-list" ).append("<p><i>Including " + numVotesFiltered + " singleton vote" +
-                                 ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
-                                 ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.</i></p>");
+        voteListNote += " Including " + numVotesFiltered + " singleton vote" +
+            ( numVotesFiltered === 1 ? "" : "s" ) + " that " +
+            ( numVotesFiltered === 1 ? "isn't" : "aren't" ) + " shown in the graph and table.";
     }
+    $( "#vote-list" ).append( "<p><i>" + voteListNote + "</i></p>" );
 
     $( "#vote-list" ).append( $( "<ul>" ) );
     discussionAnalysis.voteObjects.forEach( function ( voteObject ) {
-        $( "#vote-list ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
-                                                       voteObject.time.format( "HH:mm, D MMMM YYYY" ) +
-                                                       " by " + voteObject.user ) );
+        $( "<li>" )
+            .appendTo( "#vote-list ul" )
+            .text( voteObject.vote + ", cast on " +
+                   voteObject.time.format( "HH:mm, D MMMM YYYY" ) + " by " )
+            .append( $( "<a>" )
+                     .attr( "href", "https://en.wikipedia.org/wiki/User:" + encodeURIComponent( voteObject.user ) )
+                     .text( voteObject.user ) );
     } );
 
     if( options.scrollTo ) {

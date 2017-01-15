@@ -22,10 +22,12 @@ var VoteHistorySpecialCases = {
             pageText = pageText.replace( /<s>[\s\S]+?<\/s>/g, "" );
 
             // Numbered comments get their section header prepended and bolded
-            if( pageText.match( /=====Support=====/ ) ) {
+            if( ( /=====Support=====/ ).test( pageText ) || ( /====Discussion====/ ).test( pageText ) ) {
                 var pageTextLines = pageText.split( "\n" );
                 var currentSection;
-                var HEADER_REGEX = /^=====\s*([\w ]+?)\s*=====$/;
+                var HEADER_REGEX = /=====Support=====/.test( pageText )
+                    ? ( /^=====\s*([\w ]+?)\s*=====$/ )
+                    : /^'''(\w+?)'''$/;
                 var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\))$/;
                 var genCommentsIndex = null;
                 for( var i = 0; i < pageTextLines.length; i++ ) {
