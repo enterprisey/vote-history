@@ -4,6 +4,7 @@ document.addEventListener( "DOMContentLoaded", function () {
     // Bind form submission handler to submission button & page field
     $( "#submit" ).click( function () {
         listDiscussions();
+        $( "#suggestions" ).fadeOut();
     } );
 
     $( "#page" ).keyup( function ( e ) {

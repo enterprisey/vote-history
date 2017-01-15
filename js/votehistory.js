@@ -107,29 +107,76 @@ function listDiscussions() {
                                         .append( $( "<a> " )
                                                  .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                  .text( pageTitle ) ) );
-            sectionHeaders.forEach( function ( item, index ) {
-                var trailerRegex = ( index == sectionHeaders.length - 1 ) ? "" : "?==",
-                    regex = item + "\n(\n|.)*" + trailerRegex;
-                var section = pageText.match( new RegExp( regex, "g" ) );
-                if ( !section ) return;
-                section = section[0];
 
-                var votes = getVoteMatches( section );
+            sections = [];
+            pageText.match( /^==+.+?==+/mg ).forEach( function ( item ) {
+                sections.push( {
+                    "full": item,
+                    "level": item.match( /=/g ).length / 2,
+                    "title": /=+([^=]+)=+/.exec( item )[1].trim()
+                } );
+            } );
+
+            // Multi-section discussions get folded together
+            var prevLevel = sections[0].level;
+            for( var i = 0; i < sections.length; i++ ) {
+                if( sections[i].level == prevLevel + 1 ) {
+                    var subsectionTitles = [];
+                    var supportPresent = false, opposePresent = false;
+                    for( var j = i; j < sections.length; j++ ) {
+                        if( sections[j].level <= prevLevel ) break;
+                        subsectionTitles.push( sections[j].title );
+                        if( /^[Ss]upport/.test( sections[j].title ) ) supportPresent = true;
+                        if( /^[Oo]ppose/.test( sections[j].title ) ) opposePresent = true;
+                    }
+                    if( supportPresent && opposePresent ) {
+                        sections[i - 1].subsections = subsectionTitles;
+                        var modPageText = pageText.substring( pageText.indexOf( sections[i - 1].full ) + sections[i - 1].full.length );
+                        subsectionTitles.forEach( function ( subsectionTitle ) {
+                            modPageText = modPageText.replace( new RegExp( "==+\s*" + escapeRegExp( subsectionTitle ) + "\s*==+" ), "" );
+                        } );
+                        if( modPageText.indexOf( "==" ) >= 0 ) {
+                            modPageText = modPageText.substring( 0, modPageText.indexOf( "==" ) );
+                        }
+                        sections[i - 1].text = modPageText;
+                        sections.splice( i, subsectionTitles.length);
+                        i--;
+                    } else {
+
+                        // We still need to gather section texts
+                        sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
+                                                   ( ( i == sections.length - 1 ) ? "" : "?==" ),
+                                                       "g" ).exec( pageText )[0];
+                    }
+                } else {
+                    sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
+                                                   ( ( i == sections.length - 1 ) ? "" : "?==" ),
+                                                   "g" ).exec( pageText )[0];
+                }
+            }
+
+            sections.forEach( function ( section ) {
+                var votes = getVoteMatches( section.text );
                 var disabledAttr = votes ? {} : { "disabled": "disabled" };
                 var analyzeHandler = function () {
-                    displayDiscussionAnalysis( analyzeDiscussion( section, pageTitle ), { "scrollTo": "analysis" } );
+                    displayDiscussionAnalysis( analyzeDiscussion( section.text, pageTitle ), { "scrollTo": "analysis" } );
                 };
-                $( "#discussions" ).append( $( "<div>" )
-                                            .addClass( "discussion" )
-                                            .append( $( "<button>" )
-                                                     .addClass( "mw-ui-button mw-ui-progressive" )
-                                                     .addClass( "vote-history-analyze-button" )
-                                                     .text( "Analyze >>" )
-                                                     .attr( disabledAttr )
+                var discussionDiv = $( "<div>" )
+                    .appendTo( "#discussions" )
+                    .addClass( "discussion" )
+                    .css( "margin-left", ( ( section.level - 2 ) * 1 ) + "em" )
+                    .append( $( "<button>" )
+                             .addClass( "mw-ui-button mw-ui-progressive" )
+                             .addClass( "vote-history-analyze-button" )
+                             .text( "Analyze >>" )
+                             .attr( disabledAttr )
                                                      .click( analyzeHandler ) )
-                                            .append( $( "<b>" ).text( item.replace( /=/g, "" ) ) )
-                                            .append( $( "<i>" ).text( ( !votes ? "No votes" : ( votes.length + " votes" ) ) +
-                                                                      "; " + section.length + " bytes" ) ) );
+                    .append( $( "<b>" ).text( section.title ) )
+                    .append( $( "<i>" ).text( ( !votes ? "No votes" : ( votes.length + " votes" ) ) +
+                                              "; " + section.text.length + " bytes" ) );
+                if( section.subsections ) {
+                    discussionDiv.append( $( "<span>" ).text( "Subsections: " + section.subsections.join( ", " ) ) );
+                }
             } ); // end forEach on sectionHeaders
         } // end else block
     } ).fail( function ( error ) {
@@ -162,8 +209,9 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
     var voteObjects = [];
     voteMatches.forEach( function ( voteText ) {
-        var vote = voteText.match( /'''(.+?)'''/ )[1],
-            timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ )[1];
+        var vote = voteText.match( /'''(.+?)'''/ )[1];
+        var timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ )[1];
+        var username = voteText.match( /\[\[[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" );
         vote = vote
             .replace( /Obvious/i, "" )
             .replace( /Speedy/i, "" )
@@ -180,7 +228,11 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         // All other votes are transformed from xXxXx (or whatever) to Xxxxx
         vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
-        var voteObject = { "vote": vote, "time": moment( timestamp, "HH:mm, DD MMM YYYY" ) };
+        var voteObject = {
+            "vote": vote,
+            "time": moment( timestamp, "HH:mm, DD MMM YYYY" ),
+            "user": username
+        };
         voteObjects.push( voteObject );
     } );
 
@@ -305,7 +357,8 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
     $( "#vote-list" ).append( $( "<ul>" ) );
     discussionAnalysis.voteObjects.forEach( function ( voteObject ) {
         $( "#vote-list ul" ).append( $( "<li>" ).text( voteObject.vote + ", cast on " +
-                                                       voteObject.time.format( "HH:mm, D MMMM YYYY" ) ) );
+                                                       voteObject.time.format( "HH:mm, D MMMM YYYY" ) +
+                                                       " by " + voteObject.user ) );
     } );
 
     if( options.scrollTo ) {
@@ -373,6 +426,7 @@ function appendVoteGraphTo ( location, voteObjects ) {
         svg.append( "text" )
             .attr( "x", xScale( specificVotes.slice( -1 )[0].time ) )
             .attr( "y", yScale( voteTotals[ voteType ] ) )
+            .attr( "dy", "-0.35em" )
             .text( voteType )
             .attr( "class", voteType.toLowerCase().substr( 0, 10 ) );
     }
@@ -520,6 +574,11 @@ function scrollToElementWithId( id ) {
     if( document.getElementById( id ) ) {
         window.scrollTo( 0, $( "#" + id ).offset().top );
     }
+}
+
+// From http://stackoverflow.com/a/6969486/1757964
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
 // Export some functions for testing
