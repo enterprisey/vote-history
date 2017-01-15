@@ -211,8 +211,10 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     var voteObjects = [];
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
-        var timestamp = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ )[1];
-        var username = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim();
+        var timestampMatch = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
+        var timestamp = timestampMatch ? timestampMatch[1] : ""
+        var usernameMatch = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ );
+        var username = usernameMatch ? usernameMatch[1].replace( /#.*/, "" ).trim() : "";
         console.log(vote + ", " + username + ", " + timestamp);
         vote = vote
             .replace( /Obvious/i, "" )
