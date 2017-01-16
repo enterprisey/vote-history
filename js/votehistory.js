@@ -234,7 +234,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         var voteObject = {
             "vote": vote,
-            "time": moment( timestamp, "HH:mm, DD MMM YYYY" ),
+            "time": moment.utc( timestamp, "HH:mm, DD MMM YYYY" ),
             "user": username
         };
 
@@ -449,10 +449,26 @@ function appendVoteGraphTo ( location, voteObjects ) {
         svg.append( "text" )
             .attr( "x", xScale( specificVotes.slice( -1 )[0].time ) )
             .attr( "y", yScale( voteTotals[ voteType ] ) )
-            .attr( "dy", "-0.35em" )
             .text( voteType )
             .attr( "class", voteType.toLowerCase().substr( 0, 10 ) );
     }
+
+    // Download link
+    var allVoteTypes = Object.keys( voteTotals );
+    var downloadData = [ [ "Time" ].concat( allVoteTypes ) ];
+    var runningVoteTotals = {};
+    var voteTotalsSnapshot = [];
+    allVoteTypes.forEach( function ( voteType ) { runningVoteTotals[ voteType ] = 0; } );
+    voteObjects.forEach( function ( voteObject ) {
+        runningVoteTotals[ voteObject.vote ]++;
+        voteTotalsSnapshot = allVoteTypes.map( function ( voteType ) { return runningVoteTotals[ voteType ]; } );
+        downloadData.push( [ voteObject.time.format().replace( "+00:00", "" ) ].concat( voteTotalsSnapshot ) );
+    } );
+    $( location ).append( createDownloadDiv( downloadData ) );
+
+    // Align download links
+    console.log($( "svg" ).first().width());
+    $( "div.download" ).css( "width", $( "svg" ).first().outerWidth() );
 }
 
 function appendSupportPercentageGraphTo ( location, voteObjects ) {
@@ -590,6 +606,52 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
                 .attr( "transform", transform )
             .text( d3.format( ".1%" )( datapoint.percentage ) );
     } );
+
+    // Download link
+    var downloadData = [ [ "Time", "Percentage" ] ];
+    percentages.forEach( function ( dataPoint ) {
+        downloadData.push( [ dataPoint.time.format().replace( "+00:00", "" ), dataPoint.percentage ] );
+    } );
+    $( location ).append( createDownloadDiv( downloadData ) );
+
+    // Align download links
+    $( "div.download" ).css( "width", $( "svg" ).first().outerWidth() );
+}
+
+function createDownloadDiv( data ) {
+
+    // Build file
+    var fileText = "";
+    data.forEach( function ( record ) {
+        fileText += record.join( "," ) + "\n";
+    } );
+    fileText = fileText.trim();
+
+    var textArea = $( "<textarea>" )
+        .hide()
+        .text( fileText )
+        .attr( "readonly", "readonly" )
+        .click( function () { this.select(); } );
+
+    // Make link
+    return $( "<div>" )
+        .addClass( "download" )
+        .append( $( "<p>" )
+                 .append( $( "<a>" )
+                          .attr( "href", "#" )
+                          .text( "View" )
+                          .click( function () {
+
+                              // If the text area isn't in the DOM yet, make it so
+                              if( !textArea.parent().length ) {
+                                  $( this ).parent().parent().append( textArea );
+                              }
+
+                              textArea.toggle();
+                              $( this ).text( ( $( this ).text() === "View" ) ? "Hide" : "View" );
+                              return false;
+                          } ) )
+                 .append( " the data for this graph." ) );
 }
 
 function scrollToElementWithId( id ) {
