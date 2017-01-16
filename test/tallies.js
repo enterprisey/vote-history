@@ -11,6 +11,12 @@ votehistory.__set__( "moment", require( "moment" ) );
 var getPageText = votehistory.getPageText;
 var analyzeDiscussion = votehistory.analyzeDiscussion;
 
+function testRfaXSupports( x, voteText ) {
+    voteText = VoteHistorySpecialCases.getFunction( "Wikipedia:Requests for adminship/Example" )( voteText );
+    var analysis = analyzeDiscussion( voteText, "Wikipedia:Requests for adminship" );
+    expect( analysis.voteTally[ "Support" ] ).to.equal( x );
+}
+
 describe( "The parser", function () {
     it( "should parse single votes", function () {
         [ "Support", "Oppose", "Neutral" ].forEach( function ( voteType ) {
@@ -19,19 +25,18 @@ describe( "The parser", function () {
     } );
 
     describe( "should parse the corner case of", function () {
-        function testRfaXSupports( x, voteText ) {
-            voteText = VoteHistorySpecialCases.getFunction( "Wikipedia:Requests for adminship/Example" )( voteText );
-            var analysis = analyzeDiscussion( voteText, "Wikipedia:Requests for adminship" );
-            expect( analysis.voteTally[ "Support" ] ).to.equal( x );
-        }
 
         it( "(UTC))", function () {
             expect( analyzeDiscussion( "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC))\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ] ).to.equal( 2 );
         } );
 
         it( "(UTC).</small><br />", function () {
-            expect( analyzeDiscussion( "#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:01, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC).</small><br />\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ] ).to.equal( 3 );
+            testRfaXSupports( 3, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC).</small><br />\n#'''Support''' [[User:Z|Z]] ([[User talk:Z|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" );
         } );
+    } );
+
+    it( "detects duplicate votes", function () {
+        testRfaXSupports( 1, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)" );
     } );
 
     describe( "should parse", function () {

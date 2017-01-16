@@ -31,7 +31,7 @@ var VoteHistorySpecialCases = {
                 var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\).*?)$/;
                 var genCommentsIndex = null;
                 for( var i = 0; i < pageTextLines.length; i++ ) {
-                    var m = HEADER_REGEX.exec( pageTextLines[i] );
+                    var m = HEADER_REGEX.exec( pageTextLines[i].trim() );
                     if( m && m[1] ) {
                         if( m[1] == "Support" ||
                             m[1] == "Oppose" ||
@@ -46,14 +46,27 @@ var VoteHistorySpecialCases = {
                     } else {
                         if( !currentSection ) continue;
                         var m2 = VOTE_REGEX.exec( pageTextLines[i] );
-                        console.log(m2);
-                        if( m2 &&
-                            m2[1] &&
-                            !m2[1].startsWith( "#" ) &&
-                            !m2[1].startsWith( ":" ) &&
-                            !m2[1].startsWith( "*" ) &&
-                            !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
-                            pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
+                        if( m2 ) {
+                            if( m2[1] &&
+                                !m2[1].startsWith( "#" ) &&
+                                !m2[1].startsWith( ":" ) &&
+                                !m2[1].startsWith( "*" ) &&
+                                !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
+                                pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
+                            }
+                        } else if( i < pageTextLines.length - 1 ) {
+
+                            // Vote might be spread over two lines
+                            var newSearchText = pageTextLines[i] + "\n" + pageTextLines[i + 1];
+                            var newM2 = VOTE_REGEX.exec( newSearchText );
+                            if( newM2 &&
+                                newM2[1] &&
+                                !newM2[1].startsWith( "#" ) &&
+                                !newM2[1].startsWith( ":" ) &&
+                                !newM2[1].startsWith( "*" ) &&
+                                !newM2[1].startsWith( "'''" + currentSection + "'''" ) ) {
+                                pageTextLines[i] = "#'''" + currentSection + "'''" + newM2[1].split( "\n" )[0];
+                            }
                         }
                     }
                 }

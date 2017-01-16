@@ -197,7 +197,6 @@ function listDiscussions() {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    console.log(voteText);
     var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
     return matches;
 }
@@ -209,13 +208,13 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     }
 
     var voteObjects = [];
+    var userLookup = {}; // {username: index in voteObjects}
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var timestampMatch = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
         var timestamp = timestampMatch ? timestampMatch[1] : ""
-        var usernameMatch = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ );
-        var username = usernameMatch ? usernameMatch[1].replace( /#.*/, "" ).trim() : "";
-        console.log(vote + ", " + username + ", " + timestamp);
+        var usernameMatches = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
+        var username = usernameMatches ? usernameMatches[usernameMatches.length - 1].match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim() : "";
         vote = vote
             .replace( /Obvious/i, "" )
             .replace( /Speedy/i, "" )
@@ -232,12 +231,22 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         // All other votes are transformed from xXxXx (or whatever) to Xxxxx
         vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
+
         var voteObject = {
             "vote": vote,
             "time": moment( timestamp, "HH:mm, DD MMM YYYY" ),
             "user": username
         };
+
+        // Check for duplicate vote
+        if( username && ( username in userLookup ) ) {
+            voteObjects.splice( userLookup[ username ], 1 );
+        }
+
         voteObjects.push( voteObject );
+        if( username ) {
+            userLookup[ username ] = voteObjects.length - 1;
+        }
     } );
 
     // Comments and questions are never displayed
