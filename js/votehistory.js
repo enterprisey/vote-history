@@ -37,7 +37,18 @@ function listDiscussions() {
     }
 
     $( "#discussions" ).show();
-    $( "#discussions" ).text( "Loading..." );
+    if( document.getElementById( "loading" ) ) {
+
+        // If we're already loading, don't make another API call
+        return;
+    }
+
+    $( "#discussions" )
+        .append( $( "<div> " )
+                 .attr( "id", "loading" )
+                 .append( $( "<img>" )
+                          .attr( "src", "images/loading.gif" ) )
+                 .append( "Loading..." ) );
 
     // Preprocess title
 
@@ -467,7 +478,6 @@ function appendVoteGraphTo ( location, voteObjects ) {
     $( location ).append( createDownloadDiv( downloadData ) );
 
     // Align download links
-    console.log($( "svg" ).first().width());
     $( "div.download" ).css( "width", $( "svg" ).first().outerWidth() );
 }
 

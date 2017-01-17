@@ -32,6 +32,11 @@ a:hover {
     margin-right: 1em;
 }
 
+#loading img {
+    vertical-align: middle;
+    margin-right: 0.75em;
+}
+
 .discussion {
     border: thin solid gray;
     padding: 1em;
