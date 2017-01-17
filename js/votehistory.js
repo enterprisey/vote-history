@@ -353,8 +353,27 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
 
     // Show support percentage table
     if( options.showSupportPercentageGraph ) {
-        $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2></section>" );
-        appendSupportPercentageGraphTo( "#support-percentage-graph", discussionAnalysis.filteredVoteObjects );
+        $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2>" +
+                                 "<input type='checkbox' id='oppose-percentage' /><label for='oppose-percentage'" +
+                                 ">Show oppose instead of support percentage</label></section>" );
+        var addSupportGraph = function () {
+            appendSupportPercentageGraphTo( "#support-percentage-graph", discussionAnalysis.filteredVoteObjects );
+        };
+        document.getElementById( "oppose-percentage" ).addEventListener( "click", function () {
+            var graphSection = document.getElementById( "support-percentage-graph" );
+
+            // Remove svg element and download link div
+            graphSection.removeChild( graphSection.lastChild );
+            graphSection.removeChild( graphSection.lastChild );
+            addSupportGraph();
+
+            // Update section header
+            // Filter trick from http://stackoverflow.com/a/222847/1757964
+            var h2 = [].slice.call( graphSection.children ).filter( function ( element ) { return element.tagName === "H2"; } )[0];
+            h2.innerHTML = ( document.getElementById( "oppose-percentage" ).checked ? "Oppose" : "Support" ) +
+                " percentage graph";
+        } );
+        addSupportGraph();
     }
 
     // Show the vote tally table
@@ -492,6 +511,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
     var runningSupports = 0,
         runningOpposes = 0;
     var percentages = [];
+    var calcOpposePercentage = document.getElementById( "oppose-percentage" ).checked;
     for(i = 0; i < voteObjects.length; i++) {
         if( voteObjects[i].vote === "Support" ) runningSupports++;
         if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
@@ -500,7 +520,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
         if( ( runningSupports + runningOpposes) > 0 ) {
             percentages.push( {
                 "time": voteObjects[i].time,
-                "percentage": runningSupports / ( runningSupports + runningOpposes )
+                "percentage": ( calcOpposePercentage ? runningOpposes : runningSupports ) / ( runningSupports + runningOpposes )
             } );
         }
     }
@@ -552,7 +572,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
 
         svg.append( "rect" )
             .attr( "class", "background" )
-            .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[i] )
+            .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[ calcOpposePercentage ? ( 100 - i ) : i ] )
             .attr( "x", 0 )
             .attr( "y", yScale( i/100 ) )
             .attr( "width", WIDTH )
