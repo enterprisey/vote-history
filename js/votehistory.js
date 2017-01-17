@@ -495,10 +495,14 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
     for(i = 0; i < voteObjects.length; i++) {
         if( voteObjects[i].vote === "Support" ) runningSupports++;
         if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
-        percentages.push( {
-            "time": voteObjects[i].time,
-            "percentage": runningSupports / ( runningSupports + runningOpposes )
-        } );
+
+        // Div by 0 check
+        if( ( runningSupports + runningOpposes) > 0 ) {
+            percentages.push( {
+                "time": voteObjects[i].time,
+                "percentage": runningSupports / ( runningSupports + runningOpposes )
+            } );
+        }
     }
     var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
     if( yExtent[ 0 ] == yExtent [ 1 ] ) {
