@@ -51,7 +51,7 @@ describe( "The parser", function () {
             it( "WP:RFA/" + shortPageTitle, function () {
                 var pageTitle = "Wikipedia:Requests for adminship/" + shortPageTitle;
                 var analysis = analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( rfaText ), pageTitle );
-                //if(shortPageTitle == "K6ka"){var i = 0;analysis.voteObjects.forEach(function(v){if(v.vote=="Support")console.log(++i + ". " + v.vote + " on " + v.time.format("HH:mm, DD MMMM YYYY"));});}
+                //if(shortPageTitle == "Danny 2"){var i = 0;analysis.voteObjects.forEach(function(v){if(v.vote=="Oppose")console.log(++i + ". " + v.vote + " on " + v.time.format("HH:mm, DD MMMM YYYY") + " by " + v.user );});}
                 var voteTally = analysis.voteTally;
                 if( voteTally[ "Comment" ] ) delete voteTally[ "Comment" ];
                 expect( voteTally ).to.eql( actualVoteTally );

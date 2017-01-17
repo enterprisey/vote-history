@@ -22,7 +22,7 @@ var VoteHistorySpecialCases = {
             pageText = pageText.replace( /<s>[\s\S]+?<\/s>/g, "" );
 
             // Numbered comments get their section header prepended and bolded
-            if( ( /=====Support=====/ ).test( pageText ) || ( /====Discussion====/ ).test( pageText ) ) {
+            if( ( /=====Support=====/ ).test( pageText ) || ( /^'''Support'''$/mg ).test( pageText ) ) {
                 var pageTextLines = pageText.split( "\n" );
                 var currentSection;
                 var HEADER_REGEX = /=====Support=====/.test( pageText )
