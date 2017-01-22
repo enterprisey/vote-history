@@ -25,7 +25,7 @@ document.addEventListener( "DOMContentLoaded", function () {
         // Allow the user to be specified in the query string, like ?page=Example
         var pageArgMatch = /&?page=([^&#]*)/.exec( window.location.search.substring( 1 ) );
         if( pageArgMatch && pageArgMatch[1] ) {
-            $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ) ) );
+            $( "#page" ).val( decodeURIComponent( pageArgMatch[1].replace( /\+/g, " " ).replace( "_", " " ) ) );
             $( "#submit" ).trigger( "click" );
         }
     } else {
