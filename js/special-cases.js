@@ -56,16 +56,30 @@ var VoteHistorySpecialCases = {
                             }
                         } else if( i < pageTextLines.length - 1 ) {
 
-                            // Vote might be spread over two lines
-                            var newSearchText = pageTextLines[i] + "\n" + pageTextLines[i + 1];
-                            var newM2 = VOTE_REGEX.exec( newSearchText );
-                            if( newM2 &&
-                                newM2[1] &&
-                                !newM2[1].startsWith( "#" ) &&
-                                !newM2[1].startsWith( ":" ) &&
-                                !newM2[1].startsWith( "*" ) &&
-                                !newM2[1].startsWith( "'''" + currentSection + "'''" ) ) {
-                                pageTextLines[i] = "#'''" + currentSection + "'''" + newM2[1].split( "\n" )[0];
+                            // Vote might be spread over multiple lines, so hunt for a signature
+                            var j;
+                            for( j = i + 1; j < pageTextLines.length; j++ ) {
+                                if( /\(UTC\)[^\n]*?$/.test( pageTextLines[j] ) ) {
+                                    break;
+                                } else if( j - i > 10 ) {
+
+                                    // A 10-line vote is just extravagant
+                                    // Set j to an illegal value as a flag
+                                    j = -1;
+                                    break;
+                                }
+                            }
+                            if( j > -1 ) {
+                                var newSearchText = pageTextLines.slice( i, j + 1 ).join( "\n" );
+                                var newM2 = VOTE_REGEX.exec( newSearchText );
+                                if( newM2 &&
+                                    newM2[1] &&
+                                    !newM2[1].startsWith( "#" ) &&
+                                    !newM2[1].startsWith( ":" ) &&
+                                    !newM2[1].startsWith( "*" ) &&
+                                    !newM2[1].startsWith( "'''" + currentSection + "'''" ) ) {
+                                    pageTextLines[i] = "#'''" + currentSection + "'''" + newM2[1].split( "\n" )[0];
+                                }
                             }
                         }
                     }
