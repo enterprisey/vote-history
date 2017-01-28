@@ -141,7 +141,11 @@ function listDiscussions() {
                         if( /^[Oo]ppose/.test( sections[j].title ) ) opposePresent = true;
                     }
                     if( supportPresent && opposePresent ) {
+
+                        // Update the metadata of the parent section with the sections we're folding
                         sections[i - 1].subsections = subsectionTitles;
+
+                        // Obtain the folded section text
                         var modPageText = pageText.substring( pageText.indexOf( sections[i - 1].full ) + sections[i - 1].full.length );
                         subsectionTitles.forEach( function ( subsectionTitle ) {
                             modPageText = modPageText.replace( new RegExp( "==+\s*" + escapeRegExp( subsectionTitle ) + "\s*==+" ), "" );
@@ -156,13 +160,13 @@ function listDiscussions() {
 
                         // We still need to gather section texts
                         sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
-                                                   ( ( i == sections.length - 1 ) ? "" : "?==" ),
-                                                       "g" ).exec( pageText )[0];
+                            ( i == sections.length - 1 ) ? "" : "?==",
+                            "g" ).exec( pageText )[0];
                     }
                 } else {
                     sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
-                                                   ( ( i == sections.length - 1 ) ? "" : "?==" ),
-                                                   "g" ).exec( pageText )[0];
+                        ( i == sections.length - 1 ) ? "" : "?==",
+                        "g" ).exec( pageText )[0];
                 }
             }
 
@@ -181,7 +185,7 @@ function listDiscussions() {
                              .addClass( "vote-history-analyze-button" )
                              .text( "Analyze >>" )
                              .attr( disabledAttr )
-                                                     .click( analyzeHandler ) )
+                             .click( analyzeHandler ) )
                     .append( $( "<b>" ).text( section.title ) )
                     .append( $( "<i>" ).text( ( !votes ? "No votes" : ( votes.length + " votes" ) ) +
                                               "; " + section.text.length + " bytes" ) );
@@ -362,7 +366,7 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
         document.getElementById( "oppose-percentage" ).addEventListener( "click", function () {
             var graphSection = document.getElementById( "support-percentage-graph" );
 
-            // Remove svg element and download link div
+            // Remove svg element and div with the download link
             graphSection.removeChild( graphSection.lastChild );
             graphSection.removeChild( graphSection.lastChild );
             addSupportGraph();
@@ -525,21 +529,21 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
         }
     }
     var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
-    if( yExtent[ 0 ] == yExtent [ 1 ] ) {
+    if( yExtent[0] == yExtent[1] ) {
 
         // The graph will be a line, so expand y-axis
-        if( yExtent[ 0 ] == 0 ) {
+        if( yExtent[0] == 0 ) {
 
             // % is always 0 -> make range 0% to 1%
-            yExtent[ 1 ] = 0.01;
+            yExtent[1] = 0.01;
         } else {
 
             // otherwise -> make range (x - 1)% to x%
-            yExtent[ 0 ] = yExtent[ 1 ] - 0.01;
+            yExtent[0] = yExtent[1] - 0.01;
         }
     }
     var yScale = d3.scale.linear()
-        .range( [ HEIGHT, 0 ] )
+        .range( [HEIGHT, 0] )
         .domain( yExtent );
 
     var xAxis = d3.svg.axis()
@@ -572,7 +576,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
 
         svg.append( "rect" )
             .attr( "class", "background" )
-            .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[ calcOpposePercentage ? ( 100 - i ) : i ] )
+            .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[calcOpposePercentage ? ( 100 - i ) : i] )
             .attr( "x", 0 )
             .attr( "y", yScale( i/100 ) )
             .attr( "width", WIDTH )
