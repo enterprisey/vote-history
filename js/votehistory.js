@@ -160,12 +160,12 @@ function listDiscussions() {
 
                         // We still need to gather section texts
                         sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
-                            ( i == sections.length - 1 ) ? "" : "?==",
+                            ( ( i == sections.length - 1 ) ? "" : "?==" ),
                             "g" ).exec( pageText )[0];
                     }
                 } else {
                     sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
-                        ( i == sections.length - 1 ) ? "" : "?==",
+                        ( ( i == sections.length - 1 ) ? "" : "?==" ),
                         "g" ).exec( pageText )[0];
                 }
             }
