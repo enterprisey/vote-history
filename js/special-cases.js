@@ -128,4 +128,4 @@ var VoteHistorySpecialCases = {
     }
 };
 
-module.exports = VoteHistorySpecialCases;
+if( typeof module === typeof {} ) module.exports = VoteHistorySpecialCases;

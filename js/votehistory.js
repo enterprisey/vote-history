@@ -705,7 +705,9 @@ function escapeRegExp(str) {
 }
 
 // Export some functions for testing
-module.exports = {
-    "getPageText": getPageText,
-    "analyzeDiscussion": analyzeDiscussion
-};
+if( typeof module === typeof {} ) {
+    module.exports = {
+        "getPageText": getPageText,
+        "analyzeDiscussion": analyzeDiscussion
+    };
+}
