@@ -5,7 +5,7 @@ const API_ROOT = "https://en.wikipedia.org/w/api.php",
       API_SUFFIX = "&format=json&callback=?&continue=";
 
 function getPageText( pageTitle ) {
-    var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + pageTitle + API_SUFFIX;
+    var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + encodeURIComponent( pageTitle ) + API_SUFFIX;
     var deferred = $.Deferred();
     $.getJSON( apiUrl )
         .done( function ( data ) {
