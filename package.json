@@ -1,6 +1,6 @@
 {
   "name": "vote-history",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "http://tools.wmflabs.org/apersonbot/vote-history/",
   "description": "A tool that displays the history of a Wikipedia vote or discussion.",
   "repository": {
