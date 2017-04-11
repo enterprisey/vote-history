@@ -33,6 +33,12 @@ describe( "The parser", function () {
         it( "(UTC).</small><br />", function () {
             testRfaXSupports( 3, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC).</small><br />\n#'''Support''' [[User:Z|Z]] ([[User talk:Z|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" );
         } );
+
+        it( "an embedded timestamp", function () {
+            var analysis = analyzeDiscussion( "#'''Oppose''': Lorem ipsum dolor sit amet<!--\n--><p>foo bar The article was created at 17:17, 1 January 2000 (UTC). foo bar</p><!--\n--><p>[[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" );
+            expect( analysis.voteTally ).to.have.property( "Oppose", 1 );
+            expect( analysis.voteObjects[ 0 ].time.toISOString() ).to.equal( "2000-01-01T00:01:00.000Z" );
+        } );
     } );
 
     it( "detects duplicate votes", function () {

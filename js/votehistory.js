@@ -212,7 +212,7 @@ function listDiscussions() {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
+    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
     return matches;
 }
 
@@ -226,9 +226,10 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     var userLookup = {}; // {username: index in voteObjects}
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
-        var timestampMatch = voteText.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
+        var lastLine = voteText.split( "\n" ).pop();
+        var timestampMatch = lastLine.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
         var timestamp = timestampMatch ? timestampMatch[1] : ""
-        var usernameMatches = voteText.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
+        var usernameMatches = lastLine.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
         var username = usernameMatches ? usernameMatches[usernameMatches.length - 1].match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim() : "";
         vote = vote
             .replace( /Obvious/i, "" )
