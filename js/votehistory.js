@@ -312,7 +312,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         }
     }
 
-    // Zero out allowed votes that aren't in the tally yet
+    // Initialize allowed votes that aren't in the tally yet to zero
     allowedVoteTypes.forEach( function ( voteType ) {
         voteTally[ voteType ] = voteTally[ voteType ] || 0;
     } );
