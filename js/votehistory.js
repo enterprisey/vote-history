@@ -53,9 +53,7 @@ function listDiscussions() {
     // Preprocess title
 
     // Replace aliases ([[WP:ALIAS]])
-    pageTitle = pageTitle
-        .replace( /^(WP|Project):/, "Wikipedia:" )
-        .replace( /^(WT|Project talk):/, "Wikipedia talk:" );
+    pageTitle = preprocessPageTitle( pageTitle );
 
     getPageText( pageTitle ).done( function ( pageText ) {
         $( "#discussions" ).empty();
@@ -210,9 +208,15 @@ function listDiscussions() {
     } );
 }; // end listDiscussions()
 
+function preprocessPageTitle( pageTitle ) {
+    return pageTitle
+        .replace( /^(WP|Project):/, "Wikipedia:" )
+        .replace( /^(WT|Project talk):/, "Wikipedia talk:" );
+}
+
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\).*$/mg );
+    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?(?:\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)|class\s*=\s*"autosigned").*$/mg );
     return matches;
 }
 

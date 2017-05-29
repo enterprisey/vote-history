@@ -24,7 +24,7 @@ describe( "The parser", function () {
         } );
     } );
 
-    describe( "should parse the corner case of", function () {
+    describe( "should parse the edge case of", function () {
 
         it( "(UTC))", function () {
             expect( analyzeDiscussion( "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC))\n#'''Support''' [[User:Y|Y]] ([[User talk:Y|talk]]) 00:00, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" ).voteTally[ "Support" ] ).to.equal( 2 );
@@ -38,6 +38,10 @@ describe( "The parser", function () {
             var analysis = analyzeDiscussion( "#'''Oppose''': Lorem ipsum dolor sit amet<!--\n--><p>foo bar The article was created at 17:17, 1 January 2000 (UTC). foo bar</p><!--\n--><p>[[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)", "Wikipedia:Requests for adminship/Example" );
             expect( analysis.voteTally ).to.have.property( "Oppose", 1 );
             expect( analysis.voteObjects[ 0 ].time.toISOString() ).to.equal( "2000-01-01T00:01:00.000Z" );
+        } );
+
+        it( "an {{unsigned}} substitution", function () {
+            testRfaXSupports( 1, "#'''Support'''.00:00, 1 January 2000 (UTC)<!-- Template:Unsigned --><small class=\"autosigned\">—&nbsp;Preceding [[Wikipedia:Signatures|unsigned]] comment added by [[User:Example|Example]] ([[User talk:Example#top|talk]] • [[Special:Contributions/Example|contribs]]) </small>" );
         } );
     } );
 

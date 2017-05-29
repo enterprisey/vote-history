@@ -19,7 +19,17 @@ var VoteHistorySpecialCases = {
         "Wikipedia:Requests for adminship/": function ( pageText ) {
 
             // Strip struck stuff (it only confuses the parser)
-            pageText = pageText.replace( /<s>[\s\S]+?<\/s>/g, "" );
+            pageText = pageText.replace( /<s>[\s\S]+?<\/s>/g, function ( match ) {
+
+                /*
+                 * If we're striking stuff longer than 50 chars, it's
+                 * probably a malformed tag (left unclosed, maybe)
+                 */
+                return match.length < 50 ? "" : match;
+            } );
+
+            // Strip <ins> tags, because they confuse the parser too
+            pageText = pageText.replace( /<ins>([\s\S]+?)<\/ins>/g, "$1" );
 
             // Numbered comments get their section header prepended and bolded
             if( ( /=====Support=====/ ).test( pageText ) || ( /^'''Support'''$/mg ).test( pageText ) ) {
@@ -46,14 +56,22 @@ var VoteHistorySpecialCases = {
                     } else {
                         if( !currentSection ) continue;
                         var m2 = VOTE_REGEX.exec( pageTextLines[i] );
-                        if( m2 ) {
-                            if( m2[1] &&
-                                !m2[1].startsWith( "#" ) &&
-                                !m2[1].startsWith( ":" ) &&
-                                !m2[1].startsWith( "*" ) &&
-                                !m2[1].startsWith( "'''" + currentSection + "'''" ) ) {
-                                pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
-                            }
+
+                        function isVoteEligible( vote ) {
+                            /*
+                             * Tests if a text segment (representing
+                             * the main part of a vote, no leading #)
+                             * is okay but with the wrong text bolded
+                             * at the front.
+                             */
+                            return vote &&
+                                !vote.startsWith( "#" ) &&
+                                !vote.startsWith( ":" ) &&
+                                !vote.startsWith( "*" ) &&
+                                !vote.startsWith( "'''" + currentSection + "'''" );
+                        }
+                        if( m2 && isVoteEligible( m2[1] ) ) {
+                            pageTextLines[i] = "#'''" + currentSection + "'''" + m2[1];
                         } else if( i < pageTextLines.length - 1 ) {
 
                             // Vote might be spread over multiple lines, so hunt for a signature
@@ -72,12 +90,7 @@ var VoteHistorySpecialCases = {
                             if( j > -1 ) {
                                 var newSearchText = pageTextLines.slice( i, j + 1 ).join( "\n" );
                                 var newM2 = VOTE_REGEX.exec( newSearchText );
-                                if( newM2 &&
-                                    newM2[1] &&
-                                    !newM2[1].startsWith( "#" ) &&
-                                    !newM2[1].startsWith( ":" ) &&
-                                    !newM2[1].startsWith( "*" ) &&
-                                    !newM2[1].startsWith( "'''" + currentSection + "'''" ) ) {
+                                if( newM2 && isVoteEligible( newM2[1] ) ) {
                                     pageTextLines[i] = "#'''" + currentSection + "'''" + newM2[1].split( "\n" )[0];
                                 }
                             }
