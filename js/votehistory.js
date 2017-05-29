@@ -572,9 +572,10 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
     // yExtent contains percentages as decimals, but we want i
     // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
     // at 1, meaning 1%) to match the color coding keys
-    for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= Math.floor( yExtent[1] * 100 ); i++ ) {
+    var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 ) ? 1 : 0 );
+    for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= endPercent; i++ ) {
         var localY = yScale( i / 100 );
-        if( localY >= HEIGHT ) {
+        if( localY >= HEIGHT + 1 ) {
             break;
         }
         var localHeight = Math.min( backgroundRectHeight, HEIGHT - localY );
@@ -583,7 +584,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
             .attr( "class", "background" )
             .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[calcOpposePercentage ? ( 100 - i ) : i] )
             .attr( "x", 0 )
-            .attr( "y", yScale( i/100 ) )
+            .attr( "y", Math.max( 0, yScale( i/100 ) ) )
             .attr( "width", WIDTH )
             .attr( "height", localHeight );
     }
