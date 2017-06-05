@@ -243,7 +243,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         // Votes that contain the string "support" (or "oppose", etc)
         // are treated as if they consisted entirely of "support" (etc)
-        [ "support", "oppose", "neutral", "keep", "delete" ].forEach( function ( voteType ) {
+        [ "support", "oppose", "neutral", "keep", "delete", "merge" ].forEach( function ( voteType ) {
             if ( vote.toLowerCase().indexOf( voteType ) > -1 ) {
                 vote = voteType.charAt( 0 ).toUpperCase() + voteType.substring( 1 );
             }
