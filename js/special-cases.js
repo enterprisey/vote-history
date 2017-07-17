@@ -38,6 +38,7 @@ var VoteHistorySpecialCases = {
                 var HEADER_REGEX = /=====Support=====/.test( pageText )
                     ? ( /^=====\s*([\w ]+?)\s*=====$/ )
                     : /^'''(\w+?)'''$/;
+                var WEAK_HEADER_REGEX = new RegExp( HEADER_REGEX.source, "m" );
                 var VOTE_REGEX = /^#\s*([\s\S]+\(UTC\).*?)$/;
                 var genCommentsIndex = null;
                 for( var i = 0; i < pageTextLines.length; i++ ) {
@@ -90,7 +91,7 @@ var VoteHistorySpecialCases = {
                             if( j > -1 ) {
                                 var newSearchText = pageTextLines.slice( i, j + 1 ).join( "\n" );
                                 var newM2 = VOTE_REGEX.exec( newSearchText );
-                                if( newM2 && isVoteEligible( newM2[1] ) ) {
+                                if( newM2 && isVoteEligible( newM2[1] ) && !WEAK_HEADER_REGEX.test( newM2[1] ) ) {
                                     pageTextLines[i] = "#'''" + currentSection + "'''" + newM2[1].split( "\n" )[0];
                                 }
                             }
