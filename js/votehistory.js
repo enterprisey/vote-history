@@ -117,7 +117,7 @@ function listDiscussions() {
                                                  .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
                                                  .text( pageTitle ) ) );
 
-            sections = [];
+            var sections = [];
             pageText.match( /^==+.+?==+/mg ).forEach( function ( item ) {
                 sections.push( {
                     "full": item,
