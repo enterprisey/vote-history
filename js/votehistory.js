@@ -85,11 +85,13 @@ function listDiscussions() {
                                         .append( "." ) );
             var discussionAnalysis = analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
                                                         pageTitle );
+            var showSupportPercentageGraph = pageTitle.startsWith( "Wikipedia:Requests for adminship/" ) ||
+                    pageTitle.startsWith( "Wikipedia:Requests for bureaucratship/" );
             displayDiscussionAnalysis( discussionAnalysis,
-                                       {
-                                           "showSupportPercentageGraph": pageTitle.startsWith( "Wikipedia:Requests for adminship/" ),
-                                           "scrollTo": window.location.hash
-                                       } );
+                    {
+                      "showSupportPercentageGraph": showSupportPercentageGraph,
+                      "scrollTo": window.location.hash
+                    } );
         } else if ( !sectionHeaders ) {
             if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
                 $( "#discussions" ).append( $( "<div>" )
