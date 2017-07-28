@@ -87,10 +87,12 @@ function listDiscussions() {
                                                         pageTitle );
             var showSupportPercentageGraph = pageTitle.startsWith( "Wikipedia:Requests for adminship/" ) ||
                     pageTitle.startsWith( "Wikipedia:Requests for bureaucratship/" );
+            var rfxType = pageTitle.startsWith( "Wikipedia:Requests for adminship/" ) ? "rfa" : "rfb";
             displayDiscussionAnalysis( discussionAnalysis,
                     {
                       "showSupportPercentageGraph": showSupportPercentageGraph,
-                      "scrollTo": window.location.hash
+                      "scrollTo": window.location.hash,
+                      "rfxType": rfxType
                     } );
         } else if ( !sectionHeaders ) {
             if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
@@ -351,6 +353,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 /*
  * Options:
  *  - showSupportPercentageGraph (boolean) - true if the "support percentage graph" should be shown
+ *  - rfxType (string) - "rfa" if it's an RfA being show, "rfb" if it's an RfB being show, undefined otherwise
  *  - scrollTo (string) - id of the element to scroll to after everything's been displayed (default is not to scroll at all)
  */
 function displayDiscussionAnalysis ( discussionAnalysis, options ) {
@@ -368,7 +371,9 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
                                  "<input type='checkbox' id='oppose-percentage' /><label for='oppose-percentage'" +
                                  ">Show oppose instead of support percentage</label></section>" );
         var addSupportGraph = function () {
-            appendSupportPercentageGraphTo( "#support-percentage-graph", discussionAnalysis.filteredVoteObjects );
+            appendSupportPercentageGraphTo( "#support-percentage-graph",
+                    discussionAnalysis.filteredVoteObjects,
+                    options.rfxType || "rfa" );
         };
         document.getElementById( "oppose-percentage" ).addEventListener( "click", function () {
             var graphSection = document.getElementById( "support-percentage-graph" );
@@ -511,7 +516,11 @@ function appendVoteGraphTo ( location, voteObjects ) {
     $( "div.download" ).css( "width", $( "svg" ).first().outerWidth() );
 }
 
-function appendSupportPercentageGraphTo ( location, voteObjects ) {
+/**
+ * rfxType is a string: "rfa" if rfa, "rfb" if rfb.
+ * It's used to display the right color-coding.
+ */
+function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
     const WIDTH = 650, HEIGHT = 250, MARGIN = { top: 15, bottom: 35, left: 50, right: 0 };
     var i;
     var xScale = d3.time.scale()
@@ -575,6 +584,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
     // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
     // at 1, meaning 1%) to match the color coding keys
     var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 ) ? 1 : 0 );
+    var colorCodes = window.SUPPORT_PERCENTAGE_COLOR_CODES[rfxType];
     for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= endPercent; i++ ) {
         var localY = yScale( i / 100 );
         if( localY >= HEIGHT + 1 ) {
@@ -584,7 +594,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects ) {
 
         svg.append( "rect" )
             .attr( "class", "background" )
-            .style( "fill", "#" + window.SUPPORT_PERCENTAGE_COLOR_CODES[calcOpposePercentage ? ( 100 - i ) : i] )
+            .style( "fill", "#" + colorCodes[calcOpposePercentage ? ( 100 - i ) : i] )
             .attr( "x", 0 )
             .attr( "y", Math.max( 0, yScale( i/100 ) ) )
             .attr( "width", WIDTH )
