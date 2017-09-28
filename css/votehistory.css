@@ -9,11 +9,15 @@ body {
 }
 
 h1, h2, h3 {
-    margin-bottom: 0.25em;
+    margin-bottom: 0.5em;
 }
 
 h2 {
     font-size: 120%;
+}
+
+p, ul {
+    margin: 0.5em 0;
 }
 
 footer {
@@ -155,6 +159,14 @@ div.download textarea {
 #analysis table th, #analysis table td {
     border: thin solid gray;
     padding: 5px;
+}
+
+#vote-tally h2 {
+    margin-top: 0;
+}
+
+#vote-list {
+    margin-top: 1.5em;
 }
 
 .permalink {
