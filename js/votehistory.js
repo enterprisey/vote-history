@@ -235,8 +235,8 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var lastLine = voteText.split( "\n" ).pop();
-        var timestampMatch = lastLine.match( /(\d\d:\d\d,\s\d{1,2}\s\w+\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
-        var timestamp = timestampMatch ? timestampMatch[1] : ""
+        var timestampMatch = lastLine.match( /(\d\d:\d\d,\s(?:\d{1,2}\s\w+|\w+\s\d{1,2},)\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
+        var timestamp = timestampMatch ? timestampMatch[1] : "";
         var usernameMatches = lastLine.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
         var username = usernameMatches ? usernameMatches[usernameMatches.length - 1].match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim() : "";
         vote = vote
@@ -256,9 +256,20 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         // All other votes are transformed from xXxXx (or whatever) to Xxxxx
         vote = vote.charAt( 0 ).toUpperCase() + vote.substr( 1 ).toLowerCase();
 
+        // Handle both MDY and DMY
+        var momentFormatString;
+        var hasTwoCommas = function ( string ) {
+            return /([\s\S]*,){2}/m.test( string );
+        };
+        if( hasTwoCommas( timestamp ) ) {
+            momentFormatString = "HH:mm, MMM DD, YYYY";
+        } else {
+            momentFormatString = "HH:mm, DD MMM YYYY";
+        }
+
         var voteObject = {
             "vote": vote,
-            "time": moment.utc( timestamp, "HH:mm, DD MMM YYYY" ),
+            "time": moment.utc( timestamp, momentFormatString ),
             "user": username
         };
 
