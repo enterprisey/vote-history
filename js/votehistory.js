@@ -95,7 +95,7 @@ function listDiscussions() {
                       "rfxType": rfxType
                     } );
         } else if ( !sectionHeaders ) {
-            if ( getVotes( pageText ) || pageText.match( /\*/ ) ) {
+            if ( getVoteMatches( pageText ) || pageText.match( /^\*/ ) ) {
                 $( "#discussions" ).append( $( "<div>" )
                                             .addClass( "successbox" )
                                             .append( "Single-discussion page detected at " )
@@ -104,6 +104,24 @@ function listDiscussions() {
                                                      .text( pageTitle ) )
                                             .append( "." ) );
                 displayDiscussionAnalysis( analyzeDiscussion( section, pageTitle ), { "scrollTo": window.location.hash } );
+            } else if ( pageText.match( /^#REDIRECT\s+\[\[/i ) ) {
+                var REDIR_REGEX = /#[Rr][Ee][Dd][Ii][Rr][Ee][Cc][Tt]\s+\[\[(.+)\]\]/;
+                var redirMatch = REDIR_REGEX.exec( pageText );
+                if( redirMatch ) {
+                    $( "#discussions" ).hide();
+                    $( "#error" ).empty().show();
+                    $( "#error" ).append( $( "<div>" )
+                                          .addClass( "warningbox" )
+                                          .append( "This page appears to redirect to " + redirMatch[1] + "." )
+                                          .append( $( "<a>" )
+                                              .attr( "href", "#" )
+                                              .click( function () {
+                                                  $( "#page" ).val( redirMatch[1] );
+                                                  $( "#submit" ).click();
+                                              } )
+                                              .text( "Try using that" ) )
+                                          .append( "?" ) );
+                }
             } else {
                 $( "#discussions" ).hide();
                 $( "#error" ).empty().show();
