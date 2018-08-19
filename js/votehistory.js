@@ -238,7 +238,7 @@ function preprocessPageTitle( pageTitle ) {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?(?:\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s\d{1,2}\s\w+?\s\d\d\d\d\s\(UTC\)|class\s*=\s*"autosigned").*$/mg );
+    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?(?:\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s+\d{1,2}\s+\w+?\s+\d\d\d\d\s\(UTC\)|class\s*=\s*"autosigned").*$/mg );
     return matches;
 }
 
