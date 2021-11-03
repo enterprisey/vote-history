@@ -20,10 +20,10 @@ VoteHistorySpecialCases.internalFunctions = {
         pageText = pageText.replace( /<ins>([\s\S]+?)<\/ins>/g, "$1" );
 
         // Numbered comments get their section header prepended and bolded
-        if( ( /=====Support=====/ ).test( pageText ) || ( /^'''Support'''$/mg ).test( pageText ) ) {
+        if( ( /=====\s*Support\s*=====/ ).test( pageText ) || ( /^'''Support'''$/mg ).test( pageText ) ) {
             var pageTextLines = pageText.split( "\n" );
             var currentSection;
-            var HEADER_REGEX = /=====Support=====/.test( pageText )
+            var HEADER_REGEX = /=====\s*Support\s*=====/.test( pageText )
                 ? ( /^=====\s*([\w ]+?)\s*=====$/ )
                 : /^'''(\w+?)'''$/;
             var WEAK_HEADER_REGEX = new RegExp( HEADER_REGEX.source, "m" );
