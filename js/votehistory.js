@@ -4,6 +4,13 @@ const API_ROOT = "https://en.wikipedia.org/w/api.php",
       API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
       API_SUFFIX = "&format=json&callback=?&continue=";
 
+function makeWikiLink( pageTitle ) {
+    return $( "<a> " )
+             .attr( "href", "https://en.wikipedia.org/wiki/" + encodeURIComponent( pageTitle ) )
+             .attr( "title", pageTitle + " on the English Wikipedia" )
+             .text( pageTitle );
+}
+
 function getPageText( pageTitle ) {
     var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + encodeURIComponent( pageTitle ) + API_SUFFIX;
     var deferred = $.Deferred();
@@ -79,9 +86,7 @@ function listDiscussions() {
             $( "#discussions" ).append( $( "<div>" )
                                         .addClass( "successbox" )
                                         .text( "Special discussion page detected at " )
-                                        .append( $( "<a> " )
-                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                 .text( pageTitle ) )
+                                        .append( makeWikiLink( pageTitle ) )
                                         .append( "." ) );
             var discussionAnalysis = analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
                                                         pageTitle );
@@ -99,9 +104,7 @@ function listDiscussions() {
                 $( "#discussions" ).append( $( "<div>" )
                                             .addClass( "successbox" )
                                             .append( "Single-discussion page detected at " )
-                                            .append( $( "<a> " )
-                                                     .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                     .text( pageTitle ) )
+                                            .append( makeWikiLink( pageTitle ) )
                                             .append( "." ) );
                 displayDiscussionAnalysis( analyzeDiscussion( section, pageTitle ), { "scrollTo": window.location.hash } );
             } else if ( pageText.match( /^#REDIRECT\s+\[\[/i ) ) {
@@ -128,16 +131,12 @@ function listDiscussions() {
                 $( "#error" ).append( $( "<div>" )
                                       .addClass( "errorbox" )
                                       .append( "I couldn't find any discussion headers on " )
-                                      .append( $( "<a> " )
-                                               .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                               .text( "the page" ) )
+                                      .append( makeWikiLink( pageTitle ) )
                                       .append( "." ) );
             }
         } else {
             $( "#discussions" ).append( $( "<h2>" ).text( "Discussions on " )
-                                        .append( $( "<a> " )
-                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                 .text( pageTitle ) ) );
+                                        .append( makeWikiLink( pageTitle ) ) );
 
             var sections = [];
             pageText.match( /^==+.+?==+/mg ).forEach( function ( item ) {
