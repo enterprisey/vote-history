@@ -45,8 +45,23 @@ describe( "The parser", function () {
         } );
     } );
 
-    it( "detects duplicate votes", function () {
-        testRfaXSupports( 1, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)" );
+    describe( "handles duplicate votes", function () {
+
+        it( "in the vote totals", function () {
+            testRfaXSupports( 1, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)" );
+        } );
+
+        it( "by taking the latest vote", function () {
+            testRfaXSupports( 1, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 2 January 2000 (UTC)\n#'''Oppose''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)" );
+            testRfaXSupports( 1, "#'''Oppose''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 2 January 2000 (UTC)" );
+
+            testRfaXSupports( 0, "#'''Oppose''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 2 January 2000 (UTC)\n#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)" );
+            testRfaXSupports( 0, "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 1 January 2000 (UTC)\n#'''Oppose''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 2 January 2000 (UTC)" );
+        } );
+
+        it( "by reporting duplicates", function () {
+            expect( analyzeDiscussion( "#'''Support''' [[User:X|X]] ([[User talk:X|talk]]) 00:00, 2 January 2000 (UTC)\n#'''Oppose''' [[User:X|X]] ([[User talk:X|talk]]) 00:01, 1 January 2000 (UTC)", "" ).duplicateVotes[ 'X' ] ).to.have.length( 2 );
+        } );
     } );
 
     describe( "should parse", function () {

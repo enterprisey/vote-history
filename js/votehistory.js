@@ -1,8 +1,16 @@
 /* jshint moz: true */
 /* global VoteHistorySpecialCases, moment */
-const API_ROOT = "https://en.wikipedia.org/w/api.php",
+const SERVER = "https://en.wikipedia.org/";
+const API_ROOT = SERVER + "/w/api.php",
       API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
       API_SUFFIX = "&format=json&callback=?&continue=";
+
+function makeWikiLink( pageTitle ) {
+    return $( "<a> " )
+             .attr( "href", "https://en.wikipedia.org/wiki/" + encodeURIComponent( pageTitle ) )
+             .attr( "title", pageTitle + " on the English Wikipedia" )
+             .text( pageTitle );
+}
 
 function getPageText( pageTitle ) {
     var apiUrl = API_ROOT + "?" + API_OPTIONS + "&titles=" + encodeURIComponent( pageTitle ) + API_SUFFIX;
@@ -79,9 +87,7 @@ function listDiscussions() {
             $( "#discussions" ).append( $( "<div>" )
                                         .addClass( "successbox" )
                                         .text( "Special discussion page detected at " )
-                                        .append( $( "<a> " )
-                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                 .text( pageTitle ) )
+                                        .append( makeWikiLink( pageTitle ) )
                                         .append( "." ) );
             var discussionAnalysis = analyzeDiscussion( VoteHistorySpecialCases.getFunction( pageTitle )( pageText ),
                                                         pageTitle );
@@ -99,9 +105,7 @@ function listDiscussions() {
                 $( "#discussions" ).append( $( "<div>" )
                                             .addClass( "successbox" )
                                             .append( "Single-discussion page detected at " )
-                                            .append( $( "<a> " )
-                                                     .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                     .text( pageTitle ) )
+                                            .append( makeWikiLink( pageTitle ) )
                                             .append( "." ) );
                 displayDiscussionAnalysis( analyzeDiscussion( section, pageTitle ), { "scrollTo": window.location.hash } );
             } else if ( pageText.match( /^#REDIRECT\s+\[\[/i ) ) {
@@ -128,16 +132,12 @@ function listDiscussions() {
                 $( "#error" ).append( $( "<div>" )
                                       .addClass( "errorbox" )
                                       .append( "I couldn't find any discussion headers on " )
-                                      .append( $( "<a> " )
-                                               .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                               .text( "the page" ) )
+                                      .append( makeWikiLink( pageTitle ) )
                                       .append( "." ) );
             }
         } else {
             $( "#discussions" ).append( $( "<h2>" ).text( "Discussions on " )
-                                        .append( $( "<a> " )
-                                                 .attr( "href", "https://en.wikipedia.org/wiki/" + pageTitle )
-                                                 .text( pageTitle ) ) );
+                                        .append( makeWikiLink( pageTitle ) ) );
 
             var sections = [];
             pageText.match( /^==+.+?==+/mg ).forEach( function ( item ) {
@@ -248,8 +248,8 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         return {};
     }
 
-    var voteObjects = [];
-    var userLookup = {}; // {username: index in voteObjects}
+    var votesByUser = {};
+    var duplicateVotes = {}; // {'ExampleUser': [ some voteObjects ]}
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var lastLine = voteText.split( "\n" ).pop();
@@ -262,6 +262,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
             .replace( /Speedy/i, "" )
             .replace( /Strong/i, "" )
             .trim();
+        console.assert( !!username );
 
         // Votes that contain the string "support" (or "oppose", etc)
         // are treated as if they consisted entirely of "support" (etc)
@@ -287,19 +288,34 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
 
         var voteObject = {
             "vote": vote,
-            "time": moment.utc( timestamp, momentFormatString ),
-            "user": username
+            "time": moment.utc( timestamp, momentFormatString )
         };
 
-        // Check for duplicate vote
-        if( username && ( username in userLookup ) ) {
-            voteObjects.splice( userLookup[ username ], 1 );
-        }
+        if( username in votesByUser ) {
+            // There's a duplicate vote!
+            // Record it in the list.
+            if( duplicateVotes[ username ] ) {
+                duplicateVotes[ username ].push( voteObject );
+            } else {
+                duplicateVotes[ username ] = [ votesByUser[ username ], voteObject ];
+            }
 
-        voteObjects.push( voteObject );
-        if( username ) {
-            userLookup[ username ] = voteObjects.length - 1;
+            // And only count the most recent vote.
+            if( voteObject.time > votesByUser[ username ].time ) {
+                votesByUser[ username ] = voteObject;
+            }
+        } else {
+            votesByUser[ username ] = voteObject;
         }
+    } );
+
+    // Convert votes into an array
+    var voteObjects = Object.keys( votesByUser ).map( function ( username ) {
+        return {
+            vote: votesByUser[ username ].vote,
+            time: votesByUser[ username ].time,
+            user: username
+        };
     } );
 
     // Comments and questions are never displayed
@@ -366,8 +382,8 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     for( var i = 0; i < fixedVoteTypes.length; i++ ) {
         var currentIndex = voteTypes.indexOf( fixedVoteTypes[ i ] );
         if( currentIndex > 0 ) {
-	    voteTypes[ currentIndex ] = voteTypes[ i ];
-	    voteTypes[ i ] = fixedVoteTypes[ i ];
+            voteTypes[ currentIndex ] = voteTypes[ i ];
+            voteTypes[ i ] = fixedVoteTypes[ i ];
         }
     }
 
@@ -375,7 +391,8 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         "voteObjects": voteObjects,
         "filteredVoteObjects": filteredVoteObjects,
         "voteTally": voteTally,
-        "voteTypes": voteTypes
+        "voteTypes": voteTypes,
+        "duplicateVotes": duplicateVotes,
     };
 }
 
@@ -431,6 +448,20 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
         $( "#vote-tally table tr" ).last().append( $( "<td>" ).text( discussionAnalysis.voteTally[ voteType ] || 0 ) );
     } );
 
+    if( Object.keys( discussionAnalysis.duplicateVotes ).length > 0 ) {
+        $( "#analysis" ).append( "<section id='duplicate-votes'><h2>Duplicate votes</h2></section>" );
+        $( "#duplicate-votes" ).append( "<p><i>Only the most recent vote was counted in the graph(s) and table.</i></p>" );
+        $( "#duplicate-votes" ).append( $( "<ul>" ) );
+        Object.keys( discussionAnalysis.duplicateVotes ).forEach( function ( username ) {
+            var dupes = discussionAnalysis.duplicateVotes[ username ];
+            $( "<li>" )
+                .appendTo( "#duplicate-votes ul" )
+                // note that "votes" doesn't have to be properly pluralized :)
+                .text( username + " (" + dupes.length + " votes): " + dupes.map( function ( dupe ) { return dupe.vote + " on " + dupe.time.format( "HH:mm, D MMMM YYYY" ); } ).join( ", " ) );
+        } );
+    }
+
+    // Start the vote list
     $( "#analysis" ).append( "<section id='vote-list'><h2>Vote list</h2></section>" );
 
     // Show a note...
