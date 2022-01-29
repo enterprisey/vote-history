@@ -255,7 +255,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
         var lastLine = voteText.split( "\n" ).pop();
         var timestampMatch = lastLine.match( /(\d\d:\d\d,\s(?:\d{1,2}\s\w+|\w+\s\d{1,2},)\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
         var timestamp = timestampMatch ? timestampMatch[1] : "";
-        var usernameMatches = lastLine.match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
+        var usernameMatches = lastLine.match( /\[\[\s*[Uu]ser.*?:\s*([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
         var username = usernameMatches ? usernameMatches[usernameMatches.length - 1].match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim() : "";
         vote = vote
             .replace( /Obvious/i, "" )
