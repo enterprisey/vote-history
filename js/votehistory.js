@@ -238,7 +238,7 @@ function preprocessPageTitle( pageTitle ) {
 
 function getVoteMatches ( voteText ) {
     voteText = voteText.replace( /=.+?=/, "" );
-    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?(?:\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s+\d{1,2}\s+\w+?\s+\d\d\d\d\s\(UTC\)|class\s*=\s*"autosigned").*$/mg );
+    var matches = voteText.match( /^[#\*]\s*'''.+?'''[\s\S]*?(?:\[\[\s*(?:[Uu]ser|Special:Contributions\/).*\]\].*?\d\d:\d\d,\s+\d{1,2}\s+\w+?\s+\d\d\d\d\s+\(UTC\)|class\s*=\s*"autosigned").*$/mg );
     return matches;
 }
 
@@ -253,7 +253,7 @@ function analyzeDiscussion ( discussionText, pageTitle ) {
     voteMatches.forEach( function ( voteText ) {
         var vote = voteText.match( /'''(.+?)'''/ )[1];
         var lastLine = voteText.split( "\n" ).pop();
-        var timestampMatch = lastLine.match( /(\d\d:\d\d,\s(?:\d{1,2}\s\w+|\w+\s\d{1,2},)\s\d\d\d\d)\s\(UTC\)(?!.*\(UTC\).*)/ );
+        var timestampMatch = lastLine.match( /(\d\d:\d\d,\s+(?:\d{1,2}\s+\w+|\w+\s+\d{1,2},)\s+\d\d\d\d)\s+\(UTC\)(?!.*\(UTC\).*)/ );
         var timestamp = timestampMatch ? timestampMatch[1] : "";
         var usernameMatches = lastLine.match( /\[\[\s*[Uu]ser.*?:\s*([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/g );
         var username = usernameMatches ? usernameMatches[usernameMatches.length - 1].match( /\[\[\s*[Uu]ser.*?:([^\|\[\]<>\/]*?)(?:\||(?:\]\]))/ )[1].replace( /#.*/, "" ).trim() : "";
