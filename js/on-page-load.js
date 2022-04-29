@@ -29,27 +29,6 @@ document.addEventListener( "DOMContentLoaded", function () {
             $( "#submit" ).trigger( "click" );
         }
     } else {
-
-        // Show some suggestions
-        $( "#suggestions" )
-            .hide()
-            .append( "Suggestions: " );
-        getPageText( "Wikipedia:Requests for adminship/Recent" ).done( function ( pageText ) {
-            var mostRecentRfAs = pageText.match(/{{[Rr]ecent RfX\|A\|([^|]+)\|\d*\|/g).slice(0, 2).map( function ( matchText ) {
-                return "WP:Requests for adminship/" + matchText.replace( /{{[Rr]ecent RfX\|A\|/, "" ).replace( /\|/g, " " ).trim();
-            } );
-            ( mostRecentRfAs.concat( [ "Wikipedia:Village pump (proposals)" ] ) ).forEach( function ( pageName ) {
-                $( "#suggestions" )
-                    .append( $( "<a>" )
-                             .attr( "href", "#" )
-                             .text( pageName )
-                             .click( function () {
-                                 $( "#page" ).val( pageName );
-                                 $( "#submit" ).trigger( "click" );
-                                 $( "#suggestions" ).fadeOut();
-                             } ) );
-            } );
-            $( "#suggestions" ).fadeIn();
-        } );
+	showSuggestions();
     }
 } );

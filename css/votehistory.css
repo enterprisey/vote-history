@@ -40,14 +40,6 @@ label {
     vertical-align: middle;
 }
 
-#suggestions {
-    font-size: smaller;
-}
-
-#suggestions a:not(:last-child) {
-    margin-right: 1em;
-}
-
 #loading img {
     vertical-align: middle;
     margin-right: 0.75em;

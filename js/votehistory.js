@@ -29,6 +29,34 @@ function getPageText( pageTitle ) {
     return deferred;
 }
 
+function showSuggestions() {
+    $( "#suggestions" ).hide();
+    $.when(
+        getPageText( "Wikipedia:Requests for adminship/Recent" ),
+        $.get( "https://en.wikipedia.org/api/rest_v1/page/html/Template%3ARFX_report" ),
+    ).done( function ( pageText, reportResult ) {
+        var reportHtml = reportResult[0];
+        var currentRfXs = reportHtml.match(/Wikipedia:Requests for adminship\/.+?"/).map( function ( matchText ) {
+            return matchText.substring( 0, matchText.length - 1 );
+        } );
+        var mostRecentRfAs = pageText.match(/{{[Rr]ecent RfX\|A\|([^|]+)\|\d*\|/g).slice(0, 2).map( function ( matchText ) {
+            return "Wikipedia:Requests for adminship/" + matchText.replace( /{{[Rr]ecent RfX\|A\|/, "" ).replace( /\|/g, " " ).trim();
+        } );
+        $( "#suggestions ul" ).empty();
+        ( currentRfXs.concat( mostRecentRfAs ).concat( [ "Wikipedia:Village pump (proposals)" ] ) ).forEach( function ( pageName ) {
+            $( "#suggestions ul" )
+                .append( $( "<li>" ).append( $( "<a>" )
+                         .attr( "href", "#" )
+                         .text( pageName )
+                         .click( function () {
+                             $( "#page" ).val( pageName );
+                             $( "#submit" ).trigger( "click" );
+                             $( "#suggestions" ).fadeOut();
+                         } ) ) );
+        } );
+        $( "#suggestions" ).fadeIn();
+    } );
+}
 
 function listDiscussions() {
     var pageTitle = $( "#page" ).val().trim();
@@ -41,6 +69,7 @@ function listDiscussions() {
         $( "#error" ).append( $( "<div>" )
                               .addClass( "errorbox" )
                               .text( "No page specified." ) );
+        showSuggestions();
         return;
     }
 
