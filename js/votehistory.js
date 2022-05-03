@@ -444,13 +444,15 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
     if( options.showSupportPercentageGraph ) {
         $( "#analysis" ).append( "<section id='support-percentage-graph'><h2>Support percentage graph</h2>" +
                                  "<input type='checkbox' id='oppose-percentage' /><label for='oppose-percentage'" +
-                                 ">Show oppose instead of support percentage</label></section>" );
+                                 ">Show oppose instead of support percentage</label><br>" +
+                                 "<input type='checkbox' id='show-full-scale' /><label for='show-full-scale'" +
+                                 ">Show full percentage scale (0% to 100%)</label></section>" );
         var addSupportGraph = function () {
             appendSupportPercentageGraphTo( "#support-percentage-graph",
                     discussionAnalysis.filteredVoteObjects,
                     options.rfxType || "rfa" );
         };
-        document.getElementById( "oppose-percentage" ).addEventListener( "click", function () {
+        var recomputeGraph = function () {
             var graphSection = document.getElementById( "support-percentage-graph" );
 
             // Remove svg element and div with the download link
@@ -463,7 +465,9 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
             var h2 = [].slice.call( graphSection.children ).filter( function ( element ) { return element.tagName === "H2"; } )[0];
             h2.innerHTML = ( document.getElementById( "oppose-percentage" ).checked ? "Oppose" : "Support" ) +
                 " percentage graph";
-        } );
+        };
+        document.getElementById( "oppose-percentage" ).addEventListener( "click", recomputeGraph );
+        document.getElementById( "show-full-scale" ).addEventListener( "click", recomputeGraph );
         addSupportGraph();
     }
 
@@ -621,6 +625,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
         runningOpposes = 0;
     var percentages = [];
     var calcOpposePercentage = document.getElementById( "oppose-percentage" ).checked;
+    var showFullScale = document.getElementById( "show-full-scale" ).checked;
     for(i = 0; i < voteObjects.length; i++) {
         if( voteObjects[i].vote === "Support" ) runningSupports++;
         if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
@@ -633,18 +638,22 @@ function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
             } );
         }
     }
-    var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
-    if( yExtent[0] == yExtent[1] ) {
+    if( showFullScale ) {
+        var yExtent = [0, 1];
+    } else {
+        var yExtent = d3.extent( percentages, function ( d ) { return d.percentage; } );
+        if( yExtent[0] == yExtent[1] ) {
 
-        // The graph will be a line, so expand y-axis
-        if( yExtent[0] == 0 ) {
+            // The graph will be a line, so expand y-axis
+            if( yExtent[0] == 0 ) {
 
-            // % is always 0 -> make range 0% to 1%
-            yExtent[1] = 0.01;
-        } else {
+                // % is always 0 -> make range 0% to 1%
+                yExtent[1] = 0.01;
+            } else {
 
-            // otherwise -> make range (x - 1)% to x%
-            yExtent[0] = yExtent[1] - 0.01;
+                // otherwise -> make range (x - 1)% to x%
+                yExtent[0] = yExtent[1] - 0.01;
+            }
         }
     }
     var yScale = d3.scale.linear()
@@ -672,7 +681,7 @@ function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
     // yExtent contains percentages as decimals, but we want i
     // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
     // at 1, meaning 1%) to match the color coding keys
-    var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 ) ? 1 : 0 );
+    var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 && !showFullScale) ? 1 : 0 );
     var colorCodes = window.SUPPORT_PERCENTAGE_COLOR_CODES[rfxType];
     for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= endPercent; i++ ) {
         var localY = yScale( i / 100 );
