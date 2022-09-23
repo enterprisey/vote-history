@@ -36,7 +36,8 @@ function showSuggestions() {
         $.get( "https://en.wikipedia.org/api/rest_v1/page/html/Template%3ARFX_report" ),
     ).done( function ( pageText, reportResult ) {
         var reportHtml = reportResult[0];
-        var currentRfXs = reportHtml.match(/Wikipedia:Requests for adminship\/.+?"/).map( function ( matchText ) {
+        var rfxMatches = reportHtml.match(/Wikipedia:Requests for adminship\/.+?"/);
+        var currentRfXs = (rfxMatches || []).map( function ( matchText ) {
             return matchText.substring( 0, matchText.length - 1 );
         } );
         var mostRecentRfAs = pageText.match(/{{[Rr]ecent RfX\|A\|([^|]+)\|\d*\|/g).slice(0, 2).map( function ( matchText ) {
@@ -197,7 +198,7 @@ function listDiscussions() {
                         // Obtain the folded section text
                         var modPageText = pageText.substring( pageText.indexOf( sections[i - 1].full ) + sections[i - 1].full.length );
                         subsectionTitles.forEach( function ( subsectionTitle ) {
-                            modPageText = modPageText.replace( new RegExp( "==+\s*" + escapeRegExp( subsectionTitle ) + "\s*==+" ), "" );
+                            modPageText = modPageText.replace( new RegExp( "==+\\s*" + escapeRegExp( subsectionTitle ) + "\\s*==+" ), "" );
                         } );
                         if( modPageText.indexOf( "==" ) >= 0 ) {
                             modPageText = modPageText.substring( 0, modPageText.indexOf( "==" ) );
