@@ -214,7 +214,7 @@ function listDiscussions() {
                             "g" ).exec( pageText )[0];
                     }
                 } else {
-                    sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
+                    sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\s*\\n(\\n|.)*" +
                         ( ( i == sections.length - 1 ) ? "" : "?==" ),
                         "g" ).exec( pageText )[0];
                 }
