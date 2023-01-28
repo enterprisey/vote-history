@@ -170,53 +170,56 @@ function listDiscussions() {
                                         .append( makeWikiLink( pageTitle ) ) );
 
             var sections = [];
-            pageText.match( /^==+.+?==+/mg ).forEach( function ( item ) {
+            var headerRegex = /^==+.+?==+/mg;
+            var res;
+            while( ( res = headerRegex.exec( pageText ) ) !== null ) {
+                var title = /^=+(.+?)=+\s*$/.exec( res[0] )[1].trim();
+                title = title.replace(/<span.+?<\/span>/g, '');
+                var text = pageText.substring( res.index );
+                var endMatch = /^==+.+?==+/mg.exec( text.substring( res[0].length ) );
+                if( endMatch ) {
+                    text = text.substring( 0, res[0].length + endMatch.index );
+                }
+                if( /^[Ss]upport\b/.test( title ) ||
+                    /^[Oo]ppose\b/.test( title ) ||
+                    /^[Nn]eutral\b/.test( title ) ) {
+                    var vote = title.substring( 0, title.indexOf(' ') >= 0 ? title.indexOf(' ') : title.length );
+                    text = text.replace(/^#\s*([^'*:])/gm, "#'''" + vote + "'''  $1");
+                }
                 sections.push( {
-                    "full": item,
-                    "level": item.match( /=/g ).length / 2,
-                    "title": /=+([^=]+)=+/.exec( item )[1].trim()
+                    "full": res[0],
+                    "level": res[0].match( /^=+/g )[0].length,
+                    "title": title.trim(),
+                    "text": text
                 } );
-            } );
+            }
 
-            // Multi-section discussions get folded together
-            var prevLevel = sections[0].level;
+            // Fold adjacent "Support", "Oppose", and "Neutral" sections
             for( var i = 0; i < sections.length; i++ ) {
-                if( sections[i].level == prevLevel + 1 ) {
-                    var subsectionTitles = [];
-                    var supportPresent = false, opposePresent = false;
-                    for( var j = i; j < sections.length; j++ ) {
-                        if( sections[j].level <= prevLevel ) break;
-                        subsectionTitles.push( sections[j].title );
-                        if( /^[Ss]upport/.test( sections[j].title ) ) supportPresent = true;
-                        if( /^[Oo]ppose/.test( sections[j].title ) ) opposePresent = true;
+                var subsectionTitles = [];
+                var j = i;
+                while( sections[j].level == sections[i].level && (
+                        /^[Ss]upport/.test( sections[j].title ) ||
+                        /^[Oo]ppose/.test( sections[j].title ) ||
+                        /^[Nn]eutral/.test( sections[j].title ) ) ) {
+                    subsectionTitles.push( sections[j].title );
+                    j++;
+                }
+
+                if( subsectionTitles.length > 1 ) {
+
+                    // Update the metadata of the parent section with the sections we're folding
+                    sections[i].subsections = subsectionTitles;
+                    sections[i].title = '<' + ( subsectionTitles.length ) + ' combined sections>';
+
+                    // merge text
+                    for( var k = i + 1; k < j; k++ ) {
+                        sections[i].text += sections[k].text;
                     }
-                    if( supportPresent && opposePresent ) {
 
-                        // Update the metadata of the parent section with the sections we're folding
-                        sections[i - 1].subsections = subsectionTitles;
-
-                        // Obtain the folded section text
-                        var modPageText = pageText.substring( pageText.indexOf( sections[i - 1].full ) + sections[i - 1].full.length );
-                        subsectionTitles.forEach( function ( subsectionTitle ) {
-                            modPageText = modPageText.replace( new RegExp( "==+\\s*" + escapeRegExp( subsectionTitle ) + "\\s*==+" ), "" );
-                        } );
-                        if( modPageText.indexOf( "==" ) >= 0 ) {
-                            modPageText = modPageText.substring( 0, modPageText.indexOf( "==" ) );
-                        }
-                        sections[i - 1].text = modPageText;
-                        sections.splice( i, subsectionTitles.length);
-                        i--;
-                    } else {
-
-                        // We still need to gather section texts
-                        sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\n(\\n|.)*" +
-                            ( ( i == sections.length - 1 ) ? "" : "?==" ),
-                            "g" ).exec( pageText )[0];
-                    }
-                } else {
-                    sections[i].text = new RegExp( escapeRegExp( sections[i].full ) + "\\s*\\n(\\n|.)*" +
-                        ( ( i == sections.length - 1 ) ? "" : "?==" ),
-                        "g" ).exec( pageText )[0];
+                    sections.splice( i + 1, subsectionTitles.length - 1 );
+                    i--;
+                    continue;
                 }
             }
 
