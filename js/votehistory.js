@@ -5,6 +5,8 @@ const API_ROOT = SERVER + "/w/api.php",
       API_OPTIONS = "action=query&prop=revisions&rvprop=content&format=jsonfm",
       API_SUFFIX = "&format=json&callback=?&continue=";
 
+const SECTION_HEADER_KEYWORDS = ["support", "oppose", "neutral", "yes", "no"];
+
 function makeWikiLink( pageTitle ) {
     return $( "<a> " )
              .attr( "href", "https://en.wikipedia.org/wiki/" + encodeURIComponent( pageTitle ) )
@@ -180,11 +182,11 @@ function listDiscussions() {
                 if( endMatch ) {
                     text = text.substring( 0, res[0].length + endMatch.index );
                 }
-                if( /^[Ss]upport\b/.test( title ) ||
-                    /^[Oo]ppose\b/.test( title ) ||
-                    /^[Nn]eutral\b/.test( title ) ) {
-                    var vote = title.substring( 0, title.indexOf(' ') >= 0 ? title.indexOf(' ') : title.length );
-                    text = text.replace(/^#\s*([^'*:])/gm, "#'''" + vote + "'''  $1");
+                for( var keywordIdx = 0; keywordIdx < SECTION_HEADER_KEYWORDS.length; keywordIdx++ ) {
+                    if( new RegExp( "^" + SECTION_HEADER_KEYWORDS[keywordIdx] + "\\b" ).test( title.toLowerCase() ) ) {
+                        var vote = title.substring( 0, title.indexOf(' ') >= 0 ? title.indexOf(' ') : title.length );
+                        text = text.replace(/^#\s*([^'*:])/gm, "#'''" + vote + "'''  $1");
+                    }
                 }
                 sections.push( {
                     "full": res[0],
@@ -194,14 +196,24 @@ function listDiscussions() {
                 } );
             }
 
-            // Fold adjacent "Support", "Oppose", and "Neutral" sections
+            // Fold adjacent "Support", "Oppose", and "Neutral" (etc) section
+            console.log(sections);
             for( var i = 0; i < sections.length; i++ ) {
                 var subsectionTitles = [];
                 var j = i;
-                while( sections[j].level == sections[i].level && (
-                        /^[Ss]upport/.test( sections[j].title ) ||
-                        /^[Oo]ppose/.test( sections[j].title ) ||
-                        /^[Nn]eutral/.test( sections[j].title ) ) ) {
+                var hasKeyword = false;
+                while( true ) {
+                    hasKeyword = false;
+                    for( var keywordIdx = 0; keywordIdx < SECTION_HEADER_KEYWORDS.length; keywordIdx++ ) {
+                        if( new RegExp( "^" + SECTION_HEADER_KEYWORDS[keywordIdx] + "\\b" ).test( sections[j].title.toLowerCase() ) ) {
+                            hasKeyword = true;
+                        }
+                    }
+
+                    if( sections[j].level != sections[i].level || !hasKeyword ) {
+                        break;
+                    }
+
                     subsectionTitles.push( sections[j].title );
                     j++;
                 }
