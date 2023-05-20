@@ -239,7 +239,11 @@ function listDiscussions() {
                 var votes = getVoteMatches( section.text );
                 var disabledAttr = votes ? {} : { "disabled": "disabled" };
                 var analyzeHandler = function () {
-                    displayDiscussionAnalysis( analyzeDiscussion( section.text, pageTitle ), { "scrollTo": "analysis" } );
+                    displayDiscussionAnalysis( analyzeDiscussion( section.text, pageTitle ), {
+                        "scrollTo": "analysis",
+                        "showSupportPercentageGraph": section.subsections && ( section.subsections.length === 2 || section.subsections.length === 3 ),
+                        "rfxType": "",
+                    } );
                 };
                 var discussionDiv = $( "<div>" )
                     .appendTo( "#discussions" )
@@ -466,7 +470,7 @@ function displayDiscussionAnalysis ( discussionAnalysis, options ) {
         var addSupportGraph = function () {
             appendSupportPercentageGraphTo( "#support-percentage-graph",
                     discussionAnalysis.filteredVoteObjects,
-                    options.rfxType || "rfa" );
+                    options.rfxType );
         };
         var recomputeGraph = function () {
             var graphSection = document.getElementById( "support-percentage-graph" );
@@ -626,7 +630,7 @@ function appendVoteGraphTo ( location, voteObjects ) {
 }
 
 /**
- * rfxType is a string: "rfa" if rfa, "rfb" if rfb.
+ * rfxType is a string: "rfa" if rfa, "rfb" if rfb, "" if none.
  * It's used to display the right color-coding.
  */
 function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
@@ -643,8 +647,8 @@ function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
     var calcOpposePercentage = document.getElementById( "oppose-percentage" ).checked;
     var showFullScale = document.getElementById( "show-full-scale" ).checked;
     for(i = 0; i < voteObjects.length; i++) {
-        if( voteObjects[i].vote === "Support" ) runningSupports++;
-        if( voteObjects[i].vote === "Oppose" ) runningOpposes++;
+        if( voteObjects[i].vote === "Support" || voteObjects[i].vote === "Yes" ) runningSupports++;
+        if( voteObjects[i].vote === "Oppose" || voteObjects[i].vote === "No" ) runningOpposes++;
 
         // Div by 0 check
         if( ( runningSupports + runningOpposes) > 0 ) {
@@ -691,28 +695,32 @@ function appendSupportPercentageGraphTo ( location, voteObjects, rfxType ) {
         .attr( "width", WIDTH + MARGIN.left + MARGIN.right)
         .attr( "height", HEIGHT + MARGIN.top + MARGIN.bottom);
 
-    // Background color
-    var backgroundRectHeight = HEIGHT/( ( yExtent[1] - yExtent[0] ) * 100 );
+    if( rfxType ) {
+        // Show color coding in background
 
-    // yExtent contains percentages as decimals, but we want i
-    // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
-    // at 1, meaning 1%) to match the color coding keys
-    var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 && !showFullScale) ? 1 : 0 );
-    var colorCodes = window.SUPPORT_PERCENTAGE_COLOR_CODES[rfxType];
-    for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= endPercent; i++ ) {
-        var localY = yScale( i / 100 );
-        if( localY >= HEIGHT + 1 ) {
-            break;
+        // Background color
+        var backgroundRectHeight = HEIGHT/( ( yExtent[1] - yExtent[0] ) * 100 );
+
+        // yExtent contains percentages as decimals, but we want i
+        // to take on percentages as ints (i.e. yExtent[0] = 0.01 -> i starts
+        // at 1, meaning 1%) to match the color coding keys
+        var endPercent = Math.floor( yExtent[1] * 100 ) + ( ( yExtent[0] === 0 && !showFullScale) ? 1 : 0 );
+        var colorCodes = window.SUPPORT_PERCENTAGE_COLOR_CODES[rfxType];
+        for( i = Math.floor( yExtent[0] * 100 ) + 1; i <= endPercent; i++ ) {
+            var localY = yScale( i / 100 );
+            if( localY >= HEIGHT + 1 ) {
+                break;
+            }
+            var localHeight = Math.min( backgroundRectHeight, HEIGHT - localY );
+
+            svg.append( "rect" )
+                .attr( "class", "background" )
+                .style( "fill", "#" + colorCodes[calcOpposePercentage ? ( 100 - i ) : i] )
+                .attr( "x", 0 )
+                .attr( "y", Math.max( 0, yScale( i/100 ) ) )
+                .attr( "width", WIDTH )
+                .attr( "height", localHeight );
         }
-        var localHeight = Math.min( backgroundRectHeight, HEIGHT - localY );
-
-        svg.append( "rect" )
-            .attr( "class", "background" )
-            .style( "fill", "#" + colorCodes[calcOpposePercentage ? ( 100 - i ) : i] )
-            .attr( "x", 0 )
-            .attr( "y", Math.max( 0, yScale( i/100 ) ) )
-            .attr( "width", WIDTH )
-            .attr( "height", localHeight );
     }
 
     // Axes
